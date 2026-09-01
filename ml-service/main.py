@@ -28,9 +28,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Only the Node backend calls this service, never a browser directly, so CORS
+# is permissive on methods but the origin list stays explicit. ALLOWED_ORIGINS
+# lets the deployed Vercel URL be added without a code change.
+_origins = [
+    "http://localhost:5173",
+    "http://localhost:5001",
+    "http://127.0.0.1:5001",
+]
+if os.getenv("ALLOWED_ORIGINS"):
+    _origins += [o.strip() for o in os.getenv("ALLOWED_ORIGINS").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5001", "http://127.0.0.1:5001"],
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

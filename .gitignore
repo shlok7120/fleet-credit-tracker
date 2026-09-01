@@ -11,3 +11,4 @@ ml-service/models/*.pkl
 .DS_Store
 *.log
 npm-debug.log*
+.vercel

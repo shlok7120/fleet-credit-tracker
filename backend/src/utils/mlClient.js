@@ -11,9 +11,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Fraud scoring sits directly in the attendant's path: every second here is a
+ * second they stand waiting at the pump. Locally the service answers in
+ * milliseconds, so 4s is generous.
+ *
+ * On a free hosting tier the service sleeps when idle and takes ~30s to wake,
+ * which would silently skip detection on the first fill after a quiet spell.
+ * ML_TIMEOUT_MS lets deployment trade attendant waiting time against that;
+ * set it to 15000 or more in production if you would rather wait than miss.
+ */
+const FRAUD_TIMEOUT_MS = Number(process.env.ML_TIMEOUT_MS) || 4000;
+
 const ml = axios.create({
   baseURL: process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000',
-  timeout: 4000,
+  timeout: FRAUD_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 

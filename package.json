@@ -1,0 +1,15 @@
+{
+  "name": "fleet-credit-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Corporate Fleet Credit Tracker — monorepo root",
+  "scripts": {
+    "dev": "./start.sh",
+    "migrate": "cd backend && npm run migrate",
+    "seed": "cd backend && npm run seed",
+    "backfill": "cd backend && npm run backfill"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

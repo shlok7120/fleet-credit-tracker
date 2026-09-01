@@ -236,6 +236,49 @@ ML service (internal): `POST /predict/fraud`, `POST /predict/forecast`,
 
 ---
 
+## Deployment
+
+Live: **https://fleet-credit-tracker.vercel.app**
+
+The three services cannot all live on Vercel. Vercel's serverless functions cap
+at 250 MB unzipped; the ML service's dependencies (scipy, pandas, statsmodels,
+scikit-learn, numpy) total 372 MB. So:
+
+| Piece | Host | Why |
+|---|---|---|
+| React frontend | Vercel | Static build, what Vercel is built for |
+| Node/Express API | Vercel | Serverless functions, own project |
+| PostgreSQL | Neon | Vercel has no database |
+| Python ML | Render | Too large for a Vercel function |
+
+Two Vercel projects, not one. `fleet-credit-tracker` (frontend) rewrites
+`/api/*` to `fleet-credit-tracker-api` (backend), so the browser only ever
+talks to one origin and CORS never enters the picture.
+
+### Environment variables
+
+On the **API** project (`fleet-credit-tracker-api`):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Neon pooled connection string |
+| `JWT_SECRET` | long random string |
+| `JWT_EXPIRES_IN` | `8h` |
+| `NODE_ENV` | `production` |
+| `ML_SERVICE_URL` | the Render service URL |
+| `ML_TIMEOUT_MS` | `15000` — Render's free tier sleeps and takes ~30s to wake |
+
+### Setting up the database
+
+```bash
+DATABASE_URL="postgresql://..." npm run migrate   # create tables
+DATABASE_URL="postgresql://..." npm run seed      # demo data
+DATABASE_URL="postgresql://..." npm run backfill  # train model + score history
+```
+
+`migrate` refuses to run against a database that already holds transactions,
+since the schema drops every table. Pass `--force` if wiping is intended.
+
 ## Security notes
 
 - Passwords are bcrypt-hashed (cost 10). Plain passwords never reach the

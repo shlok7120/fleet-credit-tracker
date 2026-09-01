@@ -9,7 +9,8 @@
     "dev": "node --watch src/server.js",
     "seed": "node src/utils/seed.js",
     "backfill": "node src/utils/backfill.js",
-    "reset": "npm run seed && npm run backfill"
+    "reset": "npm run seed && npm run backfill",
+    "migrate": "node src/utils/migrate.js"
   },
   "license": "MIT",
   "dependencies": {

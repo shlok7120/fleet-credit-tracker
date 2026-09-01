@@ -1,8 +1,13 @@
 /**
  * PostgreSQL connection pool.
  *
- * A "pool" keeps a small set of open connections and hands them out as
- * requests arrive, instead of opening a fresh (slow) connection every time.
+ * Works in two very different environments:
+ *   - locally: a long-lived server, one pool, many connections
+ *   - on Vercel: short-lived serverless functions, each with its own pool
+ *
+ * Hence the small pool size in serverless — dozens of concurrent function
+ * instances each holding ten connections would exhaust the database's
+ * connection limit almost immediately.
  */
 import pg from 'pg';
 import dotenv from 'dotenv';
@@ -14,14 +19,34 @@ dotenv.config();
 // frontend is far easier to write if money arrives as a number.
 pg.types.setTypeParser(1700, (val) => (val === null ? null : parseFloat(val)));
 
+const isServerless = Boolean(process.env.VERCEL);
+
+/**
+ * Hosted providers (Neon, Supabase, Railway) hand you one DATABASE_URL.
+ * A local Homebrew install has no password and is configured piecemeal.
+ * Support both rather than forcing one style.
+ */
+const connectionConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      // Managed Postgres requires TLS. The provider's certificate is not in
+      // Node's trust store, so verification is relaxed while the transport
+      // itself stays encrypted.
+      ssl: { rejectUnauthorized: false },
+    }
+  : {
+      host: process.env.PGHOST,
+      port: Number(process.env.PGPORT),
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD || undefined,
+      database: process.env.PGDATABASE,
+    };
+
 const pool = new pg.Pool({
-  host: process.env.PGHOST,
-  port: Number(process.env.PGPORT),
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD || undefined,
-  database: process.env.PGDATABASE,
-  max: 10,
-  idleTimeoutMillis: 30000,
+  ...connectionConfig,
+  max: isServerless ? 1 : 10,
+  idleTimeoutMillis: isServerless ? 10000 : 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 pool.on('error', (err) => {
