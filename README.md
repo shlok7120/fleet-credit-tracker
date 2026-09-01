@@ -121,14 +121,6 @@ cd frontend && npm run dev
 
 Then open **http://localhost:5173**
 
-### Demo logins
-
-| Username | Password | Role |
-|---|---|---|
-| `admin` | `admin123` | Pump Admin |
-| `mgr_bluestar` | `manager123` | Fleet Manager |
-| `sunita` | `attendant123` | Pump Attendant |
-
 ---
 
 ## How the fraud detection works
