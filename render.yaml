@@ -1,0 +1,24 @@
+# Render Blueprint for the Python ML microservice.
+#
+# This file MUST live at the repository root — that is the only place Render
+# looks for it. `rootDir` below is what points the build at ml-service/.
+#
+# The ML service cannot go on Vercel: its dependencies (scipy, pandas,
+# statsmodels, scikit-learn, numpy) total ~372 MB against Vercel's 250 MB
+# serverless function limit.
+services:
+  - type: web
+    name: fleet-ml-service
+    runtime: python
+    plan: free
+    rootDir: ml-service
+    # train.py runs at build time so the model file exists before the first
+    # request, rather than being trained lazily on someone's first fill.
+    buildCommand: "pip install -r requirements.txt && python train.py"
+    # Render injects $PORT and binding to it is mandatory, or the deploy is
+    # marked failed even though the process is running.
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
