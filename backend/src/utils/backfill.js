@@ -10,6 +10,7 @@
 import dotenv from 'dotenv';
 import pool, { query } from '../config/db.js';
 import { scoreTransaction, waitForMl, trainOnHistory } from './mlClient.js';
+import { PUMP_TIMEZONE } from './time.js';
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ async function main() {
     SELECT t.txn_id,
            t.volume_liters,
            t.total_cost,
-           EXTRACT(HOUR FROM t.txn_timestamp)::int AS hour_of_day,
+           EXTRACT(HOUR FROM t.txn_timestamp AT TIME ZONE $1)::int AS hour_of_day,
            v.tank_capacity,
            COALESCE((
              SELECT AVG(p.volume_liters) FROM transactions p
@@ -53,7 +54,7 @@ async function main() {
     FROM transactions t
     JOIN vehicles v ON v.vehicle_id = t.vehicle_id
     ORDER BY t.txn_timestamp
-  `);
+  `, [PUMP_TIMEZONE]);
 
   // --- Step 1: teach the model what THIS pump's normal traffic looks like ---
   const samples = rows.map((r) => ({

@@ -13,6 +13,7 @@
 import { query, withTransaction } from '../config/db.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { scoreTransaction } from '../utils/mlClient.js';
+import { hourAtPump } from '../utils/time.js';
 
 export const listTransactions = asyncHandler(async (req, res) => {
   const { client_id, vehicle_id, flagged, limit = 100 } = req.query;
@@ -104,7 +105,8 @@ export const createTransaction = asyncHandler(async (req, res) => {
     tank_capacity: Number(vehicle.tank_capacity),
     fill_ratio: Number((litres / Number(vehicle.tank_capacity)).toFixed(4)),
     total_cost,
-    hour_of_day: new Date().getHours(),
+    // The pump's wall clock, not the server's — Vercel runs in UTC.
+    hour_of_day: hourAtPump(),
     hours_since_last_fill: Number(Number(h.hours_since_last).toFixed(2)),
     avg_volume_30d: Number(Number(h.avg_volume).toFixed(2)),
     txn_count_30d: Number(h.txn_count_30d),
