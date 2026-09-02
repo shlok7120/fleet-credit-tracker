@@ -9,12 +9,14 @@
  */
 import dotenv from 'dotenv';
 import pool, { query } from '../config/db.js';
-import { scoreTransaction, mlHealth, trainOnHistory } from './mlClient.js';
+import { scoreTransaction, waitForMl, trainOnHistory } from './mlClient.js';
 
 dotenv.config();
 
 async function main() {
-  const health = await mlHealth();
+  // A free-tier ML host sleeps when idle; give it time to wake rather than
+  // failing on the first slow response.
+  const health = await waitForMl();
   if (!health.reachable) {
     console.error('✗ ML service is not reachable at', process.env.ML_SERVICE_URL);
     console.error('  Start it first:  cd ml-service && source venv/bin/activate && uvicorn main:app --port 8000');

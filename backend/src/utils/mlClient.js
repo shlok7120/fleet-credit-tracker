@@ -65,11 +65,33 @@ export const trainOnHistory = async (samples) => {
   return data;
 };
 
-export const mlHealth = async () => {
+/**
+ * Health probe.
+ *
+ * The default 2s suits a dashboard, where a slow answer should not hold up the
+ * page. A free-tier host sleeps when idle and can take 30s or more to wake, so
+ * callers that genuinely need the service — like the backfill script — pass a
+ * longer budget rather than concluding it is dead.
+ */
+export const mlHealth = async ({ timeout = 2000 } = {}) => {
   try {
-    const { data } = await ml.get('/health', { timeout: 2000 });
+    const { data } = await ml.get('/health', { timeout });
     return { ...data, reachable: true };
   } catch {
     return { reachable: false };
   }
+};
+
+/** Poll until the ML service answers, to wake a sleeping free-tier host. */
+export const waitForMl = async ({ attempts = 6, timeout = 20000 } = {}) => {
+  for (let i = 1; i <= attempts; i++) {
+    const health = await mlHealth({ timeout });
+    if (health.reachable) return health;
+    if (i < attempts) {
+      process.stdout.write(`\r  waking ML service… attempt ${i}/${attempts}`);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+  process.stdout.write('\n');
+  return { reachable: false };
 };
