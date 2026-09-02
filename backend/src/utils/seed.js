@@ -97,7 +97,7 @@ async function main() {
   console.log('› Generating 90 days of transactions…');
   const attendants = [userIds.sunita, userIds.imran];
   const balances = {};
-  let count = 0;
+  const pending = [];          // rows are collected, then inserted in batches
   let anomalies = 0;
 
   for (let daysAgo = 90; daysAgo >= 0; daysAgo--) {
@@ -132,27 +132,49 @@ async function main() {
       const price = Number((PRICE[v.fuel] * rand(0.97, 1.03)).toFixed(2));
       const cost = Number((litres * price).toFixed(2));
 
-      await query(
-        `INSERT INTO transactions
-           (vehicle_id, attendant_id, volume_liters, price_per_liter, total_cost,
-            odometer_km, txn_timestamp)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [v.vehicle_id, pick(attendants), litres, price, cost, odo, ts.toISOString()]
-      );
-
+      pending.push([v.vehicle_id, pick(attendants), litres, price, cost, odo, ts.toISOString()]);
       balances[v.client_id] = (balances[v.client_id] || 0) + cost;
-      count++;
     }
   }
+
+  // One INSERT per row means one network round trip per row. That is
+  // imperceptible against a local database and painfully slow against a
+  // hosted one — 650 rows to another continent is several minutes of waiting.
+  // Batching them into multi-row INSERTs turns that into a handful of trips.
+  const CHUNK = 250;
+  const count = pending.length;
+
+  for (let i = 0; i < pending.length; i += CHUNK) {
+    const chunk = pending.slice(i, i + CHUNK);
+
+    // Build "($1,$2,...,$7),($8,...)" — still fully parameterised, so this is
+    // not string concatenation of user data and cannot be injected.
+    const values = chunk
+      .map((_, r) => `(${Array.from({ length: 7 }, (_, c) => `$${r * 7 + c + 1}`).join(',')})`)
+      .join(',');
+
+    await query(
+      `INSERT INTO transactions
+         (vehicle_id, attendant_id, volume_liters, price_per_liter, total_cost,
+          odometer_km, txn_timestamp)
+       VALUES ${values}`,
+      chunk.flat()
+    );
+
+    process.stdout.write(`\r  inserted ${Math.min(i + CHUNK, count)}/${count} transactions…`);
+  }
+  process.stdout.write('\n');
 
   // Clients pay most (not all) of their bill — leaving a realistic outstanding
   // balance. The balance is capped at the sanctioned credit limit: the API
   // refuses to dispense past the limit, so seeded data must respect the same
   // invariant or the dashboard shows impossible figures like 140% utilisation.
   console.log('› Settling balances…');
+  const { rows: limits } = await query('SELECT client_id, credit_limit FROM clients');
+  const limitBy = Object.fromEntries(limits.map((r) => [r.client_id, Number(r.credit_limit)]));
+
   for (const [clientId, billed] of Object.entries(balances)) {
-    const { rows } = await query('SELECT credit_limit FROM clients WHERE client_id = $1', [clientId]);
-    const limit = Number(rows[0].credit_limit);
+    const limit = limitBy[clientId] ?? 0;
 
     // Aim for a believable 25–85% utilisation, but never invent more debt
     // than the client actually ran up.

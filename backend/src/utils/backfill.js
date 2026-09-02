@@ -71,16 +71,45 @@ async function main() {
   // --- Step 2: score every transaction with the freshly fitted model ---
   console.log(`› Scoring ${rows.length} transactions…`);
 
+  // Scoring one transaction at a time means one HTTP round trip to the ML
+  // service plus one database round trip per row. Locally that is fine; against
+  // hosted services on another continent, 650 rows becomes several minutes.
+  // Score in parallel batches, then write the results in bulk.
+  const CONCURRENCY = 10;
+  const CHUNK = 250;
+
   let flagged = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const verdict = await scoreTransaction(samples[i]);
+  const verdicts = [];
+
+  for (let i = 0; i < samples.length; i += CONCURRENCY) {
+    const batch = samples.slice(i, i + CONCURRENCY);
+    const scored = await Promise.all(batch.map((sample) => scoreTransaction(sample)));
+
+    scored.forEach((v, j) => {
+      verdicts.push([rows[i + j].txn_id, v.is_flagged, v.fraud_score, v.reason]);
+      if (v.is_flagged) flagged++;
+    });
+
+    process.stdout.write(`\r  scored ${Math.min(i + CONCURRENCY, samples.length)}/${samples.length}…`);
+  }
+  process.stdout.write('\n› Writing results…\n');
+
+  // One UPDATE per chunk, joining against an inline VALUES list.
+  for (let i = 0; i < verdicts.length; i += CHUNK) {
+    const chunk = verdicts.slice(i, i + CHUNK);
+    const values = chunk
+      .map((_, r) => `($${r * 4 + 1}::int, $${r * 4 + 2}::bool, $${r * 4 + 3}::numeric, $${r * 4 + 4}::text)`)
+      .join(',');
 
     await query(
-      'UPDATE transactions SET is_flagged = $2, fraud_score = $3, flag_reason = $4 WHERE txn_id = $1',
-      [r.txn_id, verdict.is_flagged, verdict.fraud_score, verdict.reason]
+      `UPDATE transactions t
+       SET is_flagged  = v.is_flagged,
+           fraud_score = v.fraud_score,
+           flag_reason = v.flag_reason
+       FROM (VALUES ${values}) AS v(txn_id, is_flagged, fraud_score, flag_reason)
+       WHERE t.txn_id = v.txn_id`,
+      chunk.flat()
     );
-    if (verdict.is_flagged) flagged++;
   }
 
   const pct = rows.length ? ((flagged / rows.length) * 100).toFixed(1) : '0.0';
