@@ -4,7 +4,14 @@ import { Fuel, Lock, User, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useAuth, HOME_FOR_ROLE } from '../context/AuthContext';
 import { Button, Input, Label, Alert } from '../components/ui';
 
-/** Quick-fill buttons so a demo/viva does not depend on remembering passwords. */
+/**
+ * Quick-fill buttons so local development does not depend on remembering
+ * passwords. Rendered ONLY in development — `import.meta.env.DEV` is true
+ * under `npm run dev` and false in any production build, so Vite strips this
+ * block (and the credentials in it) out of the deployed bundle entirely.
+ * Publishing working admin credentials on a public login page would hand
+ * every visitor the whole ledger.
+ */
 const DEMO_ACCOUNTS = [
   { role: 'Pump Admin',     username: 'admin',        password: 'admin123',     tone: 'text-brand-600' },
   { role: 'Fleet Manager',  username: 'mgr_bluestar', password: 'manager123',   tone: 'text-violet-600' },
@@ -148,9 +155,10 @@ export default function Login() {
             </Button>
           </form>
 
+          {import.meta.env.DEV && (
           <div className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              Demo accounts
+              Demo accounts <span className="font-normal normal-case tracking-normal">· local only</span>
             </p>
             <div className="mt-2.5 space-y-1">
               {DEMO_ACCOUNTS.map((a) => (
@@ -166,6 +174,7 @@ export default function Login() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
