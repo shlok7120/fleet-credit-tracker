@@ -1,43 +1,358 @@
 @import "tailwindcss";
 
-/* ---------------------------------------------------------------------------
-   Design tokens. Defining the palette once here means a colour change is a
-   one-line edit, not a hunt through fifty components.
---------------------------------------------------------------------------- */
+/* Tailwind's `dark:` variant defaults to prefers-color-scheme. This app drives
+   the theme from <html data-theme>, so the variant has to follow that instead
+   or an explicit toggle would be ignored by every dark: utility. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===========================================================================
+   FleetCredit — "Liquid Glass" design system
+   ---------------------------------------------------------------------------
+   The look rests on three ideas:
+
+   1. A luminous AMBIENT FIELD behind everything. Glass has nothing to refract
+      if the page behind it is flat white, so the backdrop carries soft colour.
+   2. TRANSLUCENT MATERIAL — panels are semi-transparent and blur what is
+      behind them (backdrop-filter), so colour bleeds subtly through.
+   3. SPECULAR EDGES — a bright hairline along the top of each panel, fading
+      toward the bottom. This is what reads as "glass" rather than "grey box".
+
+   Every colour is a semantic token, redefined under [data-theme="dark"], so
+   the whole app themes from this one file.
+=========================================================================== */
+
 @theme {
-  --color-brand-50:  #eef6ff;
-  --color-brand-100: #d9eaff;
-  --color-brand-200: #bcdcff;
-  --color-brand-300: #8ec6ff;
-  --color-brand-400: #59a6ff;
-  --color-brand-500: #3385fc;
-  --color-brand-600: #1d66f1;
-  --color-brand-700: #1751de;
-  --color-brand-800: #1a44b4;
-  --color-brand-900: #1b3d8e;
+  /* -- Brand ------------------------------------------------------------ */
+  --color-brand-50:  #eef4ff;
+  --color-brand-100: #dbe7ff;
+  --color-brand-200: #bed4ff;
+  --color-brand-300: #92b6ff;
+  --color-brand-400: #608eff;
+  --color-brand-500: #3d69fb;
+  --color-brand-600: #2648ef;
+  --color-brand-700: #1e36d4;
+  --color-brand-800: #1e2fab;
+  --color-brand-900: #1e2e87;
+
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+
+  /* -- Semantic surfaces & ink (overridden per theme below) ------------- */
+  --color-canvas:    #eef2fb;
+  --color-ink:       #0b1220;
+  --color-ink-2:     #55607a;
+  --color-ink-3:     #677085;
+  --color-line:      rgba(15, 23, 42, 0.10);
+  --color-line-soft: rgba(15, 23, 42, 0.06);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-glass: 18px;
 }
 
+/* ---------------------------------------------------------------------------
+   Theme variables. Tailwind v4 compiles utilities to var() references, so
+   redefining a token in a scope re-themes every utility that uses it.
+--------------------------------------------------------------------------- */
+:root,
+[data-theme="light"] {
+  --color-canvas:    #eef2fb;
+  --color-ink:       #0b1220;
+  --color-ink-2:     #55607a;
+  --color-ink-3:     #677085;
+  --color-line:      rgba(15, 23, 42, 0.10);
+  --color-line-soft: rgba(15, 23, 42, 0.06);
+
+  /* The glass material itself */
+  --glass-bg:        rgba(255, 255, 255, 0.58);
+  --glass-bg-strong: rgba(255, 255, 255, 0.76);
+  --glass-bg-hover:  rgba(255, 255, 255, 0.72);
+  --glass-border:    rgba(255, 255, 255, 0.70);
+  --glass-ring:      rgba(15, 23, 42, 0.08);
+  --glass-specular:  rgba(255, 255, 255, 0.95);
+  --glass-blur:      20px;
+  --glass-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 8px 24px -8px rgba(15, 23, 42, 0.12),
+      0 24px 56px -24px rgba(15, 23, 42, 0.18);
+  --glass-shadow-lift:
+      0 2px 4px rgba(15, 23, 42, 0.05),
+      0 14px 34px -10px rgba(15, 23, 42, 0.16),
+      0 32px 70px -28px rgba(15, 23, 42, 0.22);
+
+  /* Ambient field */
+  --amb-1: rgba(61, 105, 251, 0.30);
+  --amb-2: rgba(139, 92, 246, 0.26);
+  --amb-3: rgba(16, 185, 129, 0.20);
+  --amb-4: rgba(255, 255, 255, 0.85);
+  --noise-opacity: 0.030;
+
+  --field-bg:     rgba(255, 255, 255, 0.72);
+  --field-border: rgba(15, 23, 42, 0.14);
+  --field-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+
+  --track: rgba(15, 23, 42, 0.08);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --color-canvas:    #070b16;
+  --color-ink:       #eef1f8;
+  --color-ink-2:     #a3adc4;
+  --color-ink-3:     #8b95aa;
+  --color-line:      rgba(255, 255, 255, 0.10);
+  --color-line-soft: rgba(255, 255, 255, 0.06);
+
+  --glass-bg:        rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.085);
+  --glass-bg-hover:  rgba(255, 255, 255, 0.10);
+  --glass-border:    rgba(255, 255, 255, 0.13);
+  --glass-ring:      rgba(0, 0, 0, 0.45);
+  --glass-specular:  rgba(255, 255, 255, 0.40);
+  --glass-blur:      24px;
+  --glass-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.30),
+      0 10px 30px -10px rgba(0, 0, 0, 0.55),
+      0 30px 64px -28px rgba(0, 0, 0, 0.70);
+  --glass-shadow-lift:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 16px 40px -12px rgba(0, 0, 0, 0.60),
+      0 40px 80px -30px rgba(0, 0, 0, 0.75);
+
+  --amb-1: rgba(61, 105, 251, 0.34);
+  --amb-2: rgba(139, 92, 246, 0.30);
+  --amb-3: rgba(16, 185, 129, 0.18);
+  --amb-4: rgba(9, 14, 28, 0.0);
+  --noise-opacity: 0.055;
+
+  --field-bg:     rgba(255, 255, 255, 0.05);
+  --field-border: rgba(255, 255, 255, 0.16);
+  --field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+
+  --track: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
+}
+
+/* =========================================================================
+   Base
+========================================================================= */
 html, body, #root { height: 100%; }
 
+html { scroll-behavior: smooth; }
+
 body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
+  overflow-x: hidden;
 }
 
-/* Tabular numerals keep money columns aligned as values change. */
+/* ---------------------------------------------------------------------------
+   The ambient field: three slow-drifting colour clouds plus a fine noise
+   grain. Radial gradients are used rather than blurred elements because they
+   are effectively free to composite, while a blur filter over a full-screen
+   layer is not.
+--------------------------------------------------------------------------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -25%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 44% at 18% 16%,  var(--amb-1) 0%, transparent 68%),
+    radial-gradient(42% 46% at 84% 22%,  var(--amb-2) 0%, transparent 66%),
+    radial-gradient(46% 50% at 62% 88%,  var(--amb-3) 0%, transparent 68%),
+    radial-gradient(70% 70% at 50% 40%,  var(--amb-4) 0%, transparent 100%);
+  animation: drift 34s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Grain keeps large flat gradients from banding on wide displays. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+@keyframes drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(1.5%, -1.5%, 0) scale(1.06); }
+  100% { transform: translate3d(-1.5%, 1%, 0) scale(1.02); }
+}
+
+/* =========================================================================
+   The glass material
+   -------------------------------------------------------------------------
+   .glass is the workhorse. The ::before layer paints the specular highlight —
+   a bright hairline along the top edge that fades away by the middle — which
+   is what makes a translucent panel read as a physical pane rather than a
+   flat tint.
+========================================================================= */
+.glass,
+.glass-strong {
+  position: relative;
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-ring);
+  border-radius: var(--radius-glass);
+}
+
+.glass-strong { background-color: var(--glass-bg-strong); }
+
+.glass::before,
+.glass-strong::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    170deg,
+    var(--glass-specular) 0%,
+    transparent 38%,
+    transparent 100%
+  );
+  /* Paint only the 1px ring, not the whole panel. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Panels that respond to the pointer. */
+.glass-interactive {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.28s ease;
+}
+.glass-interactive:hover {
+  transform: translateY(-2px);
+  background-color: var(--glass-bg-hover);
+  box-shadow: var(--glass-shadow-lift), inset 0 0 0 1px var(--glass-ring);
+}
+
+/* A softer variant for rows and nested surfaces that must not compete. */
+.glass-quiet {
+  background-color: var(--glass-bg);
+  border: 1px solid var(--color-line-soft);
+  border-radius: 14px;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+/* =========================================================================
+   Utilities
+========================================================================= */
 .tnum { font-variant-numeric: tabular-nums; }
 
-/* Thin, unobtrusive scrollbars inside panels. */
-.scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
-.scroll-thin::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full;
+/* Gradient text for headline figures. */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-ink) 0%, var(--color-brand-600) 130%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
 }
+
+.scroll-thin::-webkit-scrollbar { width: 9px; height: 9px; }
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--track);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover { background-color: var(--color-ink-3); background-clip: content-box; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
+::selection {
+  background: color-mix(in srgb, var(--color-brand-500) 28%, transparent);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* =========================================================================
+   Motion
+========================================================================= */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: fade-up 0.28s ease-out both; }
+.animate-fade-up { animation: fade-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-rise { animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Stagger helpers so a grid of cards arrives in sequence, not all at once. */
+.stagger > *              { animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger > *:nth-child(4) { animation-delay: 0.17s; }
+.stagger > *:nth-child(5) { animation-delay: 0.22s; }
+.stagger > *:nth-child(6) { animation-delay: 0.27s; }
+
+@keyframes sheen {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brand-500) 40%, transparent); }
+  70%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+
+/* Respect users who have asked the system to reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  body::before { animation: none; }
+}
+
+/* =========================================================================
+   Recharts — make the library's SVG defaults sit inside the design system.
+========================================================================= */
+.recharts-cartesian-grid line { stroke: var(--color-line-soft); }
+.recharts-text { fill: var(--color-ink-3); }
+.recharts-default-legend { font-size: 11px; }
+.recharts-tooltip-wrapper:focus-visible { outline: none; }
+
+/* =========================================================================
+   Print — the invoice must be plain paper, not frosted glass.
+========================================================================= */
+@media print {
+  body::before, body::after { display: none; }
+  body { background: #fff; color: #000; }
+  .glass, .glass-strong, .glass-quiet {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  .no-print { display: none !important; }
+}

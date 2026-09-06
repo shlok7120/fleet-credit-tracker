@@ -50,7 +50,7 @@ export default function VehiclesPage() {
         actions={<Button size="sm" onClick={() => setShowAdd(true)}><Plus className="size-4" /> Add vehicle</Button>}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4">
         {error && <Alert tone="red">{error}</Alert>}
 
         <Card>
@@ -74,17 +74,17 @@ export default function VehiclesPage() {
                 </thead>
                 <tbody>
                   {vehicles.map((v) => (
-                    <tr key={v.vehicle_id} className="transition-colors hover:bg-slate-50">
-                      <Td className="font-mono font-semibold text-slate-900">{v.license_plate}</Td>
-                      <Td className="text-slate-600">{v.make_model || '—'}</Td>
+                    <tr key={v.vehicle_id} className="transition-colors hover:bg-[var(--glass-bg)]">
+                      <Td className="font-mono font-semibold text-ink">{v.license_plate}</Td>
+                      <Td className="text-ink-2">{v.make_model || '—'}</Td>
                       <Td><Badge tone={v.fuel === 'diesel' ? 'amber' : v.fuel === 'cng' ? 'green' : 'brand'}>
                         {v.fuel}
                       </Badge></Td>
-                      <Td className="text-right tnum text-slate-500">{v.tank_capacity} L</Td>
+                      <Td className="text-right tnum text-ink-3">{v.tank_capacity} L</Td>
                       <Td className="text-right tnum">{num(v.txn_count)}</Td>
                       <Td className="text-right tnum">{litres(v.total_liters)}</Td>
                       <Td className="text-right tnum font-medium">{money(v.total_spend)}</Td>
-                      <Td className="whitespace-nowrap text-slate-500">
+                      <Td className="whitespace-nowrap text-ink-3">
                         {v.last_fuelled ? dateTime(v.last_fuelled) : '—'}
                       </Td>
                     </tr>
@@ -97,12 +97,12 @@ export default function VehiclesPage() {
       </div>
 
       {showAdd && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(6,10,20,0.55)] p-4"
              onClick={() => setShowAdd(false)}>
           <Card className="w-full max-w-md animate-fade-up" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <h3 className="font-semibold text-slate-900">Add vehicle</h3>
-              <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-700">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <h3 className="font-semibold text-ink">Add vehicle</h3>
+              <button onClick={() => setShowAdd(false)} className="text-ink-3 hover:text-ink-2">
                 <X className="size-4" />
               </button>
             </div>

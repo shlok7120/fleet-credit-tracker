@@ -40,7 +40,7 @@ export default function InvoicePage() {
       .catch((e) => setError(errorMessage(e)));
   }, [month, user.client_id]);
 
-  if (error) return <div className="p-6"><Alert tone="red">{error}</Alert></div>;
+  if (error) return <div><Alert tone="red">{error}</Alert></div>;
 
   return (
     <div>
@@ -59,36 +59,36 @@ export default function InvoicePage() {
         }
       />
 
-      <div className="p-6">
+      <div>
         {!invoice ? (
           <PageLoader label="Generating invoice…" />
         ) : (
-          <Card className="mx-auto max-w-3xl">
+          <Card className="mx-auto max-w-3xl print:max-w-none">
             <CardContent className="p-8">
               {/* --------------------------- Letterhead ------------------- */}
-              <div className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
+              <div className="flex flex-wrap items-start justify-between gap-6 border-b border-line pb-6">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                     Statement of account
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink">
                     {invoice.client.company_name}
                   </h2>
                   {invoice.client.contact_person && (
-                    <p className="mt-0.5 text-sm text-slate-500">
+                    <p className="mt-0.5 text-sm text-ink-3">
                       Attn: {invoice.client.contact_person}
                     </p>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                     Billing period
                   </p>
-                  <p className="mt-1 font-medium text-slate-900">
+                  <p className="mt-1 font-medium text-ink">
                     {new Date(`${invoice.month}-01`).toLocaleDateString('en-IN',
                       { month: 'long', year: 'numeric' })}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 text-xs text-ink-3">
                     Generated {new Date(invoice.generated_at).toLocaleDateString('en-IN')}
                   </p>
                 </div>
@@ -112,8 +112,8 @@ export default function InvoicePage() {
                     <tbody>
                       {invoice.lines.map((l) => (
                         <tr key={l.license_plate}>
-                          <Td className="font-mono font-medium text-slate-900">{l.license_plate}</Td>
-                          <Td className="capitalize text-slate-500">{l.fuel}</Td>
+                          <Td className="font-mono font-medium text-ink">{l.license_plate}</Td>
+                          <Td className="capitalize text-ink-3">{l.fuel}</Td>
                           <Td className="text-right tnum">{num(l.fills)}</Td>
                           <Td className="text-right tnum">{litres(l.liters)}</Td>
                           <Td className="text-right tnum font-medium">{moneyExact(l.amount)}</Td>
@@ -125,23 +125,23 @@ export default function InvoicePage() {
                   <div className="mt-6 flex justify-end">
                     <div className="w-full max-w-xs space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Total volume</span>
-                        <span className="tnum text-slate-700">{litres(invoice.total_liters)}</span>
+                        <span className="text-ink-3">Total volume</span>
+                        <span className="tnum text-ink-2">{litres(invoice.total_liters)}</span>
                       </div>
-                      <div className="flex justify-between border-t border-slate-200 pt-2">
-                        <span className="font-semibold text-slate-900">Amount due</span>
-                        <span className="text-lg font-semibold tnum text-slate-900">
+                      <div className="flex justify-between border-t border-line pt-2">
+                        <span className="font-semibold text-ink">Amount due</span>
+                        <span className="text-lg font-semibold tnum text-ink">
                           {moneyExact(invoice.subtotal)}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-8 rounded-lg bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
+                  <div className="mt-8 rounded-lg bg-[var(--glass-bg)] p-4 text-xs leading-relaxed text-ink-3">
                     <p>
-                      Current account balance: <span className="font-medium text-slate-700 tnum">
+                      Current account balance: <span className="font-medium text-ink-2 tnum">
                         {money(invoice.client.current_balance)}
-                      </span> against a sanctioned limit of <span className="font-medium text-slate-700 tnum">
+                      </span> against a sanctioned limit of <span className="font-medium text-ink-2 tnum">
                         {money(invoice.client.credit_limit)}
                       </span>.
                     </p>

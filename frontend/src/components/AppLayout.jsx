@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
+import { ThemeToggle } from './ui';
 
 /** Which sidebar links each role is allowed to see. */
 const NAV_BY_ROLE = {
@@ -30,6 +31,35 @@ const ROLE_LABEL = {
   attendant: 'Pump Attendant',
 };
 
+/** The mark, reused in the sidebar and on the login screen. */
+export const Logo = ({ size = 'md' }) => {
+  const box = size === 'sm' ? 'size-8 rounded-xl' : 'size-9 rounded-xl';
+  const icon = size === 'sm' ? 'size-4' : 'size-[18px]';
+  return (
+    <div className="flex items-center gap-2.5">
+      <div
+        className={cn(
+          box,
+          'grid place-items-center text-white bg-linear-to-br from-brand-400 to-brand-600',
+          'shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_6px_16px_-6px_var(--color-brand-600)]'
+        )}
+      >
+        <Fuel className={icon} strokeWidth={2.2} />
+      </div>
+      <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">FleetCredit</span>
+    </div>
+  );
+};
+
+const navClasses = ({ isActive }) =>
+  cn(
+    'group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium',
+    'transition-all duration-200',
+    isActive
+      ? 'text-ink bg-[var(--glass-bg-strong)] border border-[var(--glass-border)] shadow-[0_1px_0_var(--glass-specular)_inset]'
+      : 'text-ink-2 border border-transparent hover:text-ink hover:bg-[var(--glass-bg)]'
+  );
+
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -41,74 +71,75 @@ export default function AppLayout() {
     .split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full gap-0 md:gap-4 md:p-4">
       {/* ------------------------------ Sidebar ------------------------------ */}
-      <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
-          <div className="grid size-8 place-items-center rounded-lg bg-brand-600 text-white">
-            <Fuel className="size-4" />
-          </div>
-          <span className="font-semibold tracking-tight text-slate-900">FleetCredit</span>
+      <aside className="no-print glass sticky top-4 hidden h-[calc(100vh-2rem)] w-60 shrink-0 flex-col md:flex">
+        <div className="px-5 pt-5 pb-4">
+          <Logo />
         </div>
 
-        <nav className="flex-1 space-y-0.5 p-3">
+        <nav className="flex-1 space-y-1 px-3">
           {links.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                )
-              }
-            >
-              <Icon className="size-4" />
-              {label}
+            <NavLink key={to} to={to} end={end} className={navClasses}>
+              {({ isActive }) => (
+                <>
+                  {/* Active marker: a small luminous bar on the leading edge. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full',
+                      'bg-linear-to-b from-brand-400 to-brand-600 transition-opacity duration-200',
+                      isActive ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  <Icon className={cn('size-4 transition-colors', isActive && 'text-brand-500')} />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-slate-200 p-3">
-          <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-            <div className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-semibold text-white">
+        <div className="p-3">
+          <div className="glass-quiet flex items-center gap-2.5 p-2.5">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-linear-to-br from-brand-500 to-accent-600 text-[11px] font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-900">{user.full_name}</p>
-              <p className="truncate text-xs text-slate-500">{ROLE_LABEL[user.role]}</p>
+              <p className="truncate text-[12.5px] font-medium text-ink">{user.full_name}</p>
+              <p className="truncate text-[11px] text-ink-3">{ROLE_LABEL[user.role]}</p>
             </div>
           </div>
-          <button
-            onClick={signOut}
-            className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-700"
-          >
-            <LogOut className="size-4" />
-            Sign out
-          </button>
+
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              onClick={signOut}
+              className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium
+                         text-ink-2 transition-colors hover:bg-rose-500/10 hover:text-rose-700 dark:text-rose-300"
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
-      {/* ------------------------------- Main -------------------------------- */}
+      {/* -------------------------------- Main ------------------------------- */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar */}
-        <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
+        {/* Mobile bar */}
+        <header className="no-print glass sticky top-0 z-30 mb-3 flex items-center justify-between rounded-none px-4 py-3 md:hidden">
+          <Logo size="sm" />
           <div className="flex items-center gap-2">
-            <div className="grid size-7 place-items-center rounded-lg bg-brand-600 text-white">
-              <Fuel className="size-3.5" />
-            </div>
-            <span className="font-semibold text-slate-900">FleetCredit</span>
+            <ThemeToggle />
+            <button onClick={signOut} className="grid size-9 place-items-center rounded-xl glass-quiet text-ink-2">
+              <LogOut className="size-4" />
+            </button>
           </div>
-          <button onClick={signOut} className="text-slate-500 hover:text-rose-600">
-            <LogOut className="size-5" />
-          </button>
         </header>
 
         {/* Mobile nav */}
-        <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2 md:hidden scroll-thin">
+        <nav className="no-print scroll-thin mb-3 flex gap-1.5 overflow-x-auto px-3 md:hidden">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -116,8 +147,10 @@ export default function AppLayout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium',
-                  isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600'
+                  'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors',
+                  isActive
+                    ? 'glass-quiet text-ink'
+                    : 'text-ink-2'
                 )
               }
             >
@@ -127,7 +160,7 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        <main className="flex-1 overflow-y-auto scroll-thin">
+        <main className="min-w-0 flex-1 px-4 pb-4 md:px-0">
           <Outlet />
         </main>
       </div>
@@ -137,11 +170,15 @@ export default function AppLayout() {
 
 /** Standard page heading used by every screen. */
 export const PageHeader = ({ title, description, actions }) => (
-  <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
-      {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
+  <div className="mb-5 flex flex-wrap items-end justify-between gap-4 px-1 pt-1 md:px-0">
+    <div className="animate-fade-up">
+      <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-ink md:text-[26px]">
+        {title}
+      </h1>
+      {description && (
+        <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-ink-3">{description}</p>
+      )}
     </div>
-    {actions && <div className="flex items-center gap-2">{actions}</div>}
+    {actions && <div className="no-print flex items-center gap-2">{actions}</div>}
   </div>
 );

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import api, { errorMessage } from '../../lib/api';
+import { useChartTheme, axisProps } from '../../lib/chartTheme';
 import { money, litres, num, dateTime, utilisationTone } from '../../lib/utils';
 import { PageHeader } from '../../components/AppLayout';
 import {
@@ -17,6 +18,7 @@ import {
 } from '../../components/ui';
 
 export default function AdminDashboard() {
+  const chart = useChartTheme();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
@@ -26,7 +28,7 @@ export default function AdminDashboard() {
       .catch((err) => setError(errorMessage(err)));
   }, []);
 
-  if (error) return <div className="p-6"><Alert tone="red" title="Could not load the dashboard">{error}</Alert></div>;
+  if (error) return <div><Alert tone="red" title="Could not load the dashboard">{error}</Alert></div>;
   if (!data) return <PageLoader label="Loading pump overview…" />;
 
   const { kpis, top_clients, fraud_alerts, revenue_trend, ml_service } = data;
@@ -52,7 +54,7 @@ export default function AdminDashboard() {
         }
       />
 
-      <div className="space-y-5 p-6">
+      <div className="space-y-5">
         {/* ------------------------------- KPIs ------------------------------ */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -93,24 +95,21 @@ export default function AdminDashboard() {
                   <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                     <defs>
                       <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"   stopColor="#1d66f1" stopOpacity={0.28} />
-                        <stop offset="100%" stopColor="#1d66f1" stopOpacity={0} />
+                        <stop offset="0%"   stopColor={chart.brand} stopOpacity={0.34} />
+                        <stop offset="100%" stopColor={chart.brand} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }}
-                           axisLine={false} tickLine={false} interval={4} />
-                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+                    <XAxis dataKey="day" {...axisProps(chart)} interval={4} />
+                    <YAxis {...axisProps(chart)}
                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <Tooltip
-                      contentStyle={{
-                        borderRadius: 10, border: '1px solid #e2e8f0',
-                        fontSize: 12, boxShadow: '0 4px 12px rgb(0 0 0 / 0.06)',
-                      }}
+                      contentStyle={chart.tooltip}
                       formatter={(v, n) => (n === 'revenue' ? [money(v), 'Revenue'] : [litres(v), 'Volume'])}
                     />
-                    <Area type="monotone" dataKey="revenue" stroke="#1d66f1"
-                          strokeWidth={2} fill="url(#rev)" />
+                    <Area type="monotone" dataKey="revenue" stroke={chart.brand}
+                          strokeWidth={2.25} fill="url(#rev)"
+                          activeDot={{ r: 4, strokeWidth: 2, stroke: chart.brand }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -136,8 +135,8 @@ export default function AdminDashboard() {
                 return (
                   <div key={c.client_id}>
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="truncate text-sm font-medium text-slate-800">{c.company_name}</p>
-                      <p className="shrink-0 text-sm font-semibold text-slate-900 tnum">
+                      <p className="truncate text-sm font-medium text-ink">{c.company_name}</p>
+                      <p className="shrink-0 text-sm font-semibold text-ink tnum">
                         {money(c.current_balance)}
                       </p>
                     </div>
@@ -181,20 +180,20 @@ export default function AdminDashboard() {
               <div className="space-y-2">
                 {fraud_alerts.slice(0, 5).map((a) => (
                   <div key={a.txn_id}
-                       className="flex flex-wrap items-start gap-3 rounded-lg border border-rose-100 bg-rose-50/50 p-3">
-                    <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-rose-100 text-rose-600">
+                       className="flex flex-wrap items-start gap-3 rounded-lg border border-rose-500/25 bg-rose-500/8 p-3">
+                    <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-rose-500/15 text-rose-700 dark:text-rose-300">
                       <Droplets className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm font-semibold text-slate-900">
+                        <span className="font-mono text-sm font-semibold text-ink">
                           {a.license_plate}
                         </span>
-                        <span className="text-xs text-slate-500">{a.company_name}</span>
+                        <span className="text-xs text-ink-3">{a.company_name}</span>
                         <Badge tone="red">score {Number(a.fraud_score).toFixed(2)}</Badge>
                       </div>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-600">{a.flag_reason}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">
+                      <p className="mt-1 text-xs leading-relaxed text-ink-2">{a.flag_reason}</p>
+                      <p className="mt-1 text-[11px] text-ink-3">
                         {litres(a.volume_liters)} · {money(a.total_cost)} · {dateTime(a.txn_timestamp)}
                         {a.attendant_name && ` · logged by ${a.attendant_name}`}
                       </p>

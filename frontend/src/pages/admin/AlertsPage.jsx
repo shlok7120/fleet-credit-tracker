@@ -37,7 +37,7 @@ export default function AlertsPage() {
         description="Transactions the anomaly model considered suspicious. Clearing an alert marks it reviewed."
         actions={
           <div className="flex items-center gap-2">
-            <Filter className="size-4 text-slate-400" />
+            <Filter className="size-4 text-ink-3" />
             <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="w-44 py-1.5 text-xs">
               <option value="true">Flagged only</option>
               <option value="">All transactions</option>
@@ -46,7 +46,7 @@ export default function AlertsPage() {
         }
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4">
         {error && <Alert tone="red">{error}</Alert>}
 
         {!rows ? (
@@ -67,16 +67,16 @@ export default function AlertsPage() {
               <Card key={t.txn_id} className={t.is_flagged ? 'border-rose-200' : ''}>
                 <CardContent className="flex flex-wrap items-start gap-4 p-4">
                   <div className={`grid size-9 shrink-0 place-items-center rounded-lg ${
-                    t.is_flagged ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                    t.is_flagged ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}>
                     {t.is_flagged ? <TriangleAlert className="size-4" /> : <CircleCheck className="size-4" />}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-sm font-semibold text-slate-900">
+                      <span className="font-mono text-sm font-semibold text-ink">
                         {t.license_plate}
                       </span>
-                      <span className="text-sm text-slate-500">{t.company_name}</span>
+                      <span className="text-sm text-ink-3">{t.company_name}</span>
                       {t.is_flagged && (
                         <Badge tone={Number(t.fraud_score) >= 0.9 ? 'red' : 'amber'}>
                           risk {Number(t.fraud_score).toFixed(2)}
@@ -86,10 +86,10 @@ export default function AlertsPage() {
                     </div>
 
                     {t.flag_reason && (
-                      <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{t.flag_reason}</p>
+                      <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{t.flag_reason}</p>
                     )}
 
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
                       <span className="tnum">{litres(t.volume_liters)}</span>
                       <span className="tnum">{money(t.total_cost)}</span>
                       <span>{dateTime(t.txn_timestamp)}</span>

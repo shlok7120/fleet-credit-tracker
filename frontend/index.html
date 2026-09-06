@@ -4,7 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="theme-color" content="#eef2fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080c18" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Corporate fleet fuel credit tracking with ML fraud detection." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>FleetCredit</title>
+
+    <script>
+      // Apply the saved theme before first paint, so a dark-mode user never
+      // sees a white flash while React boots.
+      (function () {
+        try {
+          var t = localStorage.getItem('fct_theme');
+          if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

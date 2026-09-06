@@ -106,7 +106,7 @@ export default function DispenserScreen() {
         description={`Signed in as ${user.full_name}. Log each fill as it happens.`}
       />
 
-      <div className="p-6">
+      <div>
         {/* --------------------------- Shift totals -------------------------- */}
         {shift && (
           <div className="mb-5 grid gap-4 sm:grid-cols-3">
@@ -132,7 +132,7 @@ export default function DispenserScreen() {
                 </CardHeader>
                 <CardContent>
                   <div className="relative">
-                    <Search className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-ink-3" />
                     <Input
                       ref={searchRef}
                       autoFocus
@@ -152,13 +152,13 @@ export default function DispenserScreen() {
                         <button
                           key={v.vehicle_id}
                           onClick={() => choose(v)}
-                          className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/50"
+                          className="flex w-full items-center justify-between gap-3 rounded-lg border border-line p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-500/8"
                         >
                           <div className="min-w-0">
-                            <p className="font-mono text-base font-semibold text-slate-900">
+                            <p className="font-mono text-base font-semibold text-ink">
                               {v.license_plate}
                             </p>
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-xs text-ink-3">
                               {v.company_name} · {v.make_model || v.fuel}
                             </p>
                           </div>
@@ -166,7 +166,7 @@ export default function DispenserScreen() {
                             <Badge tone={v.fuel === 'diesel' ? 'amber' : v.fuel === 'cng' ? 'green' : 'brand'}>
                               {v.fuel}
                             </Badge>
-                            <p className="mt-1 text-[11px] text-slate-400 tnum">
+                            <p className="mt-1 text-[11px] text-ink-3 tnum">
                               {money(v.available_credit)} left
                             </p>
                           </div>
@@ -179,17 +179,17 @@ export default function DispenserScreen() {
             ) : (
               <>
                 {/* Selected vehicle summary */}
-                <Card className="border-brand-200 bg-brand-50/40">
+                <Card className="border-brand-200 bg-brand-500/8">
                   <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
                     <div className="flex items-center gap-3">
                       <div className="grid size-11 place-items-center rounded-lg bg-brand-600 text-white">
                         <Fuel className="size-5" />
                       </div>
                       <div>
-                        <p className="font-mono text-lg font-semibold leading-tight text-slate-900">
+                        <p className="font-mono text-lg font-semibold leading-tight text-ink">
                           {selected.license_plate}
                         </p>
-                        <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <p className="flex items-center gap-1.5 text-xs text-ink-3">
                           <Building2 className="size-3" />
                           {selected.company_name}
                         </p>
@@ -197,8 +197,8 @@ export default function DispenserScreen() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-[11px] text-slate-500">Credit available</p>
-                        <p className="font-semibold tnum text-slate-900">
+                        <p className="text-[11px] text-ink-3">Credit available</p>
+                        <p className="font-semibold tnum text-ink">
                           {money(selected.available_credit)}
                         </p>
                       </div>
@@ -237,7 +237,7 @@ export default function DispenserScreen() {
                             <button
                               key={q} type="button"
                               onClick={() => setVolume(String(q))}
-                              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+                              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:border-brand-300 hover:bg-brand-500/10 hover:text-brand-700"
                             >
                               {q} L
                             </button>
@@ -245,13 +245,13 @@ export default function DispenserScreen() {
                           <button
                             type="button"
                             onClick={() => setVolume(String(selected.tank_capacity))}
-                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+                            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-2 transition-colors hover:border-brand-300 hover:bg-brand-500/10 hover:text-brand-700"
                           >
                             Full tank
                           </button>
                         </div>
                         {overTank && (
-                          <p className="mt-1.5 text-xs text-rose-600">
+                          <p className="mt-1.5 text-xs text-rose-700 dark:text-rose-300">
                             That is more than the {selected.tank_capacity} L tank holds — this will be flagged.
                           </p>
                         )}
@@ -265,7 +265,7 @@ export default function DispenserScreen() {
                                  className="tnum" />
                         </div>
                         <div>
-                          <Label>Odometer (km) <span className="font-normal text-slate-400">optional</span></Label>
+                          <Label>Odometer (km) <span className="font-normal text-ink-3">optional</span></Label>
                           <Input type="number" min="0" value={odometer}
                                  onChange={(e) => setOdometer(e.target.value)}
                                  placeholder="184320" className="tnum" />
@@ -274,11 +274,11 @@ export default function DispenserScreen() {
 
                       {/* Live total */}
                       <div className={`rounded-xl border p-4 ${
-                        overLimit ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-slate-50'}`}>
+                        overLimit ? 'border-rose-200 bg-rose-500/10' : 'border-line bg-[var(--glass-bg)]'}`}>
                         <div className="flex items-baseline justify-between">
-                          <span className="text-sm font-medium text-slate-600">Total to charge</span>
+                          <span className="text-sm font-medium text-ink-2">Total to charge</span>
                           <span className={`text-3xl font-semibold tnum ${
-                            overLimit ? 'text-rose-600' : 'text-slate-900'}`}>
+                            overLimit ? 'text-rose-700 dark:text-rose-300' : 'text-ink'}`}>
                             {moneyExact(total)}
                           </span>
                         </div>
@@ -318,16 +318,16 @@ export default function DispenserScreen() {
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
                     <div className={`grid size-10 shrink-0 place-items-center rounded-lg ${
-                      result.ml.is_flagged ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                      result.ml.is_flagged ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'}`}>
                       {result.ml.is_flagged
                         ? <TriangleAlert className="size-5" />
                         : <CircleCheck className="size-5" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">
+                      <p className="font-semibold text-ink">
                         Recorded — {litres(result.transaction.volume_liters)} to {result.vehicle.license_plate}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-ink-3">
                         {moneyExact(result.transaction.total_cost)} billed to {result.vehicle.company_name}.
                         {' '}{money(result.credit_remaining)} credit remaining.
                       </p>
@@ -366,21 +366,21 @@ export default function DispenserScreen() {
                   <EmptyState icon={Fuel} title="Nothing logged yet"
                               hint="Your fills will appear here as you record them." />
                 ) : (
-                  <div className="max-h-[32rem] divide-y divide-slate-100 overflow-y-auto scroll-thin">
+                  <div className="max-h-[32rem] divide-y divide-[var(--color-line-soft)] overflow-y-auto scroll-thin">
                     {shift.recent.map((t) => (
                       <div key={t.txn_id} className="flex items-center justify-between gap-3 px-5 py-3">
                         <div className="min-w-0">
-                          <p className="font-mono text-sm font-medium text-slate-900">
+                          <p className="font-mono text-sm font-medium text-ink">
                             {t.license_plate}
                           </p>
-                          <p className="truncate text-xs text-slate-400">{t.company_name}</p>
-                          <p className="text-[11px] text-slate-400">{dateTime(t.txn_timestamp)}</p>
+                          <p className="truncate text-xs text-ink-3">{t.company_name}</p>
+                          <p className="text-[11px] text-ink-3">{dateTime(t.txn_timestamp)}</p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <p className="text-sm font-semibold tnum text-slate-900">
+                          <p className="text-sm font-semibold tnum text-ink">
                             {money(t.total_cost)}
                           </p>
-                          <p className="text-xs tnum text-slate-400">{litres(t.volume_liters)}</p>
+                          <p className="text-xs tnum text-ink-3">{litres(t.volume_liters)}</p>
                           {t.is_flagged && <Badge tone="red" className="mt-0.5">flagged</Badge>}
                         </div>
                       </div>

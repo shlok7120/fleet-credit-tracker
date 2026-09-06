@@ -33,10 +33,27 @@ export const dateTime = (iso) =>
 export const dateOnly = (iso) =>
   new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
-/** Colour code a credit-utilisation percentage. */
+/**
+ * Colour code a credit-utilisation percentage.
+ *
+ * `bar` uses a gradient so the meter catches light like the rest of the
+ * interface; `text` lightens in dark mode, where a -600 shade reads as muddy.
+ */
 export const utilisationTone = (pct) => {
-  if (pct >= 90) return { bar: 'bg-rose-500',   text: 'text-rose-600',   label: 'Critical' };
-  if (pct >= 75) return { bar: 'bg-amber-500',  text: 'text-amber-600',  label: 'High' };
-  if (pct >= 50) return { bar: 'bg-brand-500',  text: 'text-brand-600',  label: 'Moderate' };
-  return           { bar: 'bg-emerald-500', text: 'text-emerald-600', label: 'Healthy' };
+  if (pct >= 90) return {
+    bar: 'bg-linear-to-r from-rose-400 to-rose-600',
+    text: 'text-rose-700 dark:text-rose-300', label: 'Critical',
+  };
+  if (pct >= 75) return {
+    bar: 'bg-linear-to-r from-amber-400 to-amber-600',
+    text: 'text-amber-700 dark:text-amber-300', label: 'High',
+  };
+  if (pct >= 50) return {
+    bar: 'bg-linear-to-r from-brand-400 to-brand-600',
+    text: 'text-brand-700 dark:text-brand-300', label: 'Moderate',
+  };
+  return {
+    bar: 'bg-linear-to-r from-emerald-400 to-emerald-600',
+    text: 'text-emerald-700 dark:text-emerald-300', label: 'Healthy',
+  };
 };

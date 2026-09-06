@@ -6,6 +6,7 @@ import {
 import { Wallet, Droplets, Truck, Receipt, TrendingUp, Sparkles } from 'lucide-react';
 
 import api, { errorMessage } from '../../lib/api';
+import { useChartTheme, axisProps } from '../../lib/chartTheme';
 import { money, litres, num, dateTime, utilisationTone } from '../../lib/utils';
 import { PageHeader } from '../../components/AppLayout';
 import {
@@ -14,6 +15,7 @@ import {
 } from '../../components/ui';
 
 export default function ManagerDashboard() {
+  const chart = useChartTheme();
   const [data, setData] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState('');
@@ -29,7 +31,7 @@ export default function ManagerDashboard() {
       .catch((err) => setError(errorMessage(err)));
   }, []);
 
-  if (error) return <div className="p-6"><Alert tone="red" title="Could not load your fleet">{error}</Alert></div>;
+  if (error) return <div><Alert tone="red" title="Could not load your fleet">{error}</Alert></div>;
   if (!data) return <PageLoader label="Loading your fleet…" />;
 
   const { client, summary, by_vehicle, monthly, recent_transactions } = data;
@@ -73,7 +75,7 @@ export default function ManagerDashboard() {
         </Badge>}
       />
 
-      <div className="space-y-5 p-6">
+      <div className="space-y-5">
         {/* ------------------------------- KPIs ----------------------------- */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={Wallet} tone="amber" label="Outstanding balance"
@@ -93,8 +95,8 @@ export default function ManagerDashboard() {
         <Card>
           <CardContent className="p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm font-medium text-slate-700">Credit utilisation</p>
-              <p className="text-sm text-slate-500 tnum">
+              <p className="text-sm font-medium text-ink-2">Credit utilisation</p>
+              <p className="text-sm text-ink-3 tnum">
                 {money(client.current_balance)} of {money(client.credit_limit)}
               </p>
             </div>
@@ -120,17 +122,22 @@ export default function ManagerDashboard() {
               <div className="h-60">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }}
-                           axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+                    <XAxis dataKey="month" {...axisProps(chart)} />
+                    <YAxis {...axisProps(chart)}
                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <Tooltip
-                      cursor={{ fill: '#f1f5f9' }}
-                      contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                      cursor={{ fill: chart.cursor }}
+                      contentStyle={chart.tooltip}
                       formatter={(v) => [money(v), 'Spend']}
                     />
-                    <Bar dataKey="spend" fill="#1d66f1" radius={[5, 5, 0, 0]} maxBarSize={44} />
+                    <defs>
+                      <linearGradient id="spendBar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor={chart.brand} stopOpacity={0.95} />
+                        <stop offset="100%" stopColor={chart.brand} stopOpacity={0.45} />
+                      </linearGradient>
+                    </defs>
+                    <Bar dataKey="spend" fill="url(#spendBar)" radius={[7, 7, 0, 0]} maxBarSize={44} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -163,19 +170,18 @@ export default function ManagerDashboard() {
                 <div className="h-60">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={forecastData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }}
-                             axisLine={false} tickLine={false} interval={4} />
-                      <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+                      <XAxis dataKey="date" {...axisProps(chart, 10)} interval={4} />
+                      <YAxis {...axisProps(chart)} />
                       <Tooltip
-                        contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                        contentStyle={chart.tooltip}
                         formatter={(v, n) => [litres(v), n === 'actual' ? 'Actual' : 'Predicted']}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Line type="monotone" dataKey="actual" name="Actual" stroke="#64748b"
+                      <Line type="monotone" dataKey="actual" name="Actual" stroke={chart.muted}
                             strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#8b5cf6"
-                            strokeWidth={2} strokeDasharray="5 4" dot={false} />
+                      <Line type="monotone" dataKey="predicted" name="Predicted" stroke={chart.accent}
+                            strokeWidth={2.25} strokeDasharray="5 4" dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -206,15 +212,15 @@ export default function ManagerDashboard() {
               </thead>
               <tbody>
                 {by_vehicle.map((v) => (
-                  <tr key={v.vehicle_id} className="transition-colors hover:bg-slate-50">
-                    <Td className="font-mono font-medium text-slate-900">{v.license_plate}</Td>
+                  <tr key={v.vehicle_id} className="transition-colors hover:bg-[var(--glass-bg)]">
+                    <Td className="font-mono font-medium text-ink">{v.license_plate}</Td>
                     <Td><Badge tone={v.fuel === 'diesel' ? 'amber' : v.fuel === 'cng' ? 'green' : 'brand'}>
                       {v.fuel}
                     </Badge></Td>
-                    <Td className="text-right tnum text-slate-500">{v.tank_capacity} L</Td>
+                    <Td className="text-right tnum text-ink-3">{v.tank_capacity} L</Td>
                     <Td className="text-right tnum">{num(v.fills)}</Td>
                     <Td className="text-right tnum">{litres(v.liters)}</Td>
-                    <Td className="text-right font-semibold tnum text-slate-900">{money(v.spend)}</Td>
+                    <Td className="text-right font-semibold tnum text-ink">{money(v.spend)}</Td>
                   </tr>
                 ))}
               </tbody>
@@ -244,12 +250,12 @@ export default function ManagerDashboard() {
               </thead>
               <tbody>
                 {recent_transactions.map((t) => (
-                  <tr key={t.txn_id} className="transition-colors hover:bg-slate-50">
-                    <Td className="whitespace-nowrap text-slate-500">{dateTime(t.txn_timestamp)}</Td>
-                    <Td className="font-mono font-medium text-slate-900">{t.license_plate}</Td>
+                  <tr key={t.txn_id} className="transition-colors hover:bg-[var(--glass-bg)]">
+                    <Td className="whitespace-nowrap text-ink-3">{dateTime(t.txn_timestamp)}</Td>
+                    <Td className="font-mono font-medium text-ink">{t.license_plate}</Td>
                     <Td className="text-right tnum">{litres(t.volume_liters)}</Td>
                     <Td className="text-right tnum font-medium">{money(t.total_cost)}</Td>
-                    <Td className="text-slate-500">{t.attendant_name || '—'}</Td>
+                    <Td className="text-ink-3">{t.attendant_name || '—'}</Td>
                     <Td>{t.is_flagged && <Badge tone="red">flagged</Badge>}</Td>
                   </tr>
                 ))}

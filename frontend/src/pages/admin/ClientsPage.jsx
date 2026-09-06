@@ -12,11 +12,11 @@ import {
 /** Small modal used for both "add client" and "record payment". */
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(6,10,20,0.55)] p-4" onClick={onClose}>
       <Card className="w-full max-w-md animate-fade-up" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h3 className="font-semibold text-slate-900">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h3 className="font-semibold text-ink">{title}</h3>
+          <button onClick={onClose} className="text-ink-3 hover:text-ink-2">
             <X className="size-4" />
           </button>
         </div>
@@ -93,7 +93,7 @@ export default function ClientsPage() {
         }
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4">
         {error && <Alert tone="red">{error}</Alert>}
         {notice && <Alert tone="green">{notice}</Alert>}
 
@@ -120,17 +120,17 @@ export default function ClientsPage() {
                     const pct = Number(c.utilisation_pct);
                     const tone = utilisationTone(pct);
                     return (
-                      <tr key={c.client_id} className="transition-colors hover:bg-slate-50">
+                      <tr key={c.client_id} className="transition-colors hover:bg-[var(--glass-bg)]">
                         <Td>
-                          <p className="font-medium text-slate-900">{c.company_name}</p>
+                          <p className="font-medium text-ink">{c.company_name}</p>
                           {c.contact_person && (
-                            <p className="text-xs text-slate-400">{c.contact_person}</p>
+                            <p className="text-xs text-ink-3">{c.contact_person}</p>
                           )}
                         </Td>
-                        <Td className="text-slate-500">{c.manager_name || '—'}</Td>
+                        <Td className="text-ink-3">{c.manager_name || '—'}</Td>
                         <Td className="text-right tnum">{num(c.vehicle_count)}</Td>
                         <Td className="text-right tnum">{money(c.credit_limit)}</Td>
-                        <Td className="text-right font-semibold text-slate-900 tnum">
+                        <Td className="text-right font-semibold text-ink tnum">
                           {money(c.current_balance)}
                         </Td>
                         <Td>
@@ -201,14 +201,14 @@ export default function ClientsPage() {
       {/* ---------------------------- Record payment ----------------------- */}
       {payFor && (
         <Modal title={`Record payment — ${payFor.company_name}`} onClose={() => setPayFor(null)}>
-          <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm">
+          <div className="mb-4 rounded-lg bg-[var(--glass-bg)] p-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-500">Currently owed</span>
-              <span className="font-semibold text-slate-900 tnum">{money(payFor.current_balance)}</span>
+              <span className="text-ink-3">Currently owed</span>
+              <span className="font-semibold text-ink tnum">{money(payFor.current_balance)}</span>
             </div>
             <div className="mt-1 flex justify-between">
-              <span className="text-slate-500">Credit limit</span>
-              <span className="tnum text-slate-700">{money(payFor.credit_limit)}</span>
+              <span className="text-ink-3">Credit limit</span>
+              <span className="tnum text-ink-2">{money(payFor.credit_limit)}</span>
             </div>
           </div>
           <form onSubmit={recordPayment} className="space-y-3.5">
