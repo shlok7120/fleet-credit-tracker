@@ -14,24 +14,67 @@ import { money, litres, num, dateTime, utilisationTone } from '../../lib/utils';
 import { PageHeader } from '../../components/AppLayout';
 import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
-  StatCard, Badge, PageLoader, Alert, ProgressBar, EmptyState, Button,
+  StatCard, Badge, PageLoader, Alert, ProgressBar, EmptyState, Button, Spinner,
 } from '../../components/ui';
+
+/**
+ * The ML service is hosted on a free tier that sleeps after ~15 minutes idle
+ * and takes about a minute to wake. The health probe deliberately gives up
+ * after 2s so it never delays this dashboard — but that means a sleeping
+ * service is indistinguishable from a dead one, and the badge read "offline",
+ * which looks broken to anyone being shown the app.
+ *
+ * The probe itself is what starts the wake-up (Render begins spinning the
+ * instance up even though our request times out), so polling a few times
+ * turns "offline" into a state that heals itself.
+ */
+const WAKE_POLL_MS = 8000;
+const WAKE_MAX_ATTEMPTS = 9;   // ~72s, comfortably longer than a cold start
 
 export default function AdminDashboard() {
   const chart = useChartTheme();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [mlState, setMlState] = useState('unknown'); // unknown | up | waking | down
 
   useEffect(() => {
     api.get('/dashboard/admin')
-      .then(({ data }) => setData(data))
+      .then(({ data }) => {
+        setData(data);
+        setMlState(data.ml_service.reachable ? 'up' : 'waking');
+      })
       .catch((err) => setError(errorMessage(err)));
   }, []);
+
+  // Poll until the sleeping ML service answers, then flip the badge.
+  useEffect(() => {
+    if (mlState !== 'waking') return;
+
+    let cancelled = false;
+    let attempts = 0;
+    let timer;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const { data: health } = await api.get('/health');
+        if (cancelled) return;
+        if (health.ml_service === 'up') { setMlState('up'); return; }
+      } catch { /* keep trying */ }
+
+      if (cancelled) return;
+      if (attempts >= WAKE_MAX_ATTEMPTS) setMlState('down');
+      else timer = setTimeout(poll, WAKE_POLL_MS);
+    };
+
+    timer = setTimeout(poll, WAKE_POLL_MS);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [mlState]);
 
   if (error) return <div><Alert tone="red" title="Could not load the dashboard">{error}</Alert></div>;
   if (!data) return <PageLoader label="Loading pump overview…" />;
 
-  const { kpis, top_clients, fraud_alerts, revenue_trend, ml_service } = data;
+  const { kpis, top_clients, fraud_alerts, revenue_trend } = data;
   const exposurePct = kpis.total_credit_extended > 0
     ? (kpis.total_outstanding / kpis.total_credit_extended) * 100 : 0;
 
@@ -47,9 +90,14 @@ export default function AdminDashboard() {
         title="Pump overview"
         description="Credit exposure, today's throughput and open fraud alerts."
         actions={
-          <Badge tone={ml_service.reachable ? 'green' : 'amber'}>
-            <Cpu className="size-3" />
-            ML service {ml_service.reachable ? 'online' : 'offline'}
+          <Badge tone={mlState === 'up' ? 'green' : mlState === 'waking' ? 'amber' : 'red'}>
+            {mlState === 'waking'
+              ? <Spinner className="size-3" />
+              : <Cpu className="size-3" />}
+            {mlState === 'up' && 'ML service online'}
+            {mlState === 'waking' && 'ML service waking…'}
+            {mlState === 'down' && 'ML service offline'}
+            {mlState === 'unknown' && 'ML service'}
           </Badge>
         }
       />

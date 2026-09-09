@@ -52,7 +52,11 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
-      <div className="glass animate-rise grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1.05fr_1fr]">
+      {/* The right column is shorter in production, where the dev-only demo
+          block is stripped out. Without a floor on the card height the brand
+          column's justify-between collapses and the footer collides with the
+          feature list. */}
+      <div className="glass animate-rise grid w-full max-w-5xl overflow-hidden lg:min-h-[600px] lg:grid-cols-[1.05fr_1fr]">
         {/* --------------------------- Brand panel --------------------------- */}
         <div className="relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
           {/* Colour wash confined to this half, so the form side stays calm. */}
@@ -103,7 +107,7 @@ export default function Login() {
             </div>
           </div>
 
-          <p className="relative text-[11px] text-ink-3">
+          <p className="relative pt-10 text-[11px] text-ink-3">
             Corporate Fleet Credit Tracker · Internship Project
           </p>
         </div>
