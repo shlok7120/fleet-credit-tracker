@@ -236,6 +236,73 @@ ML service (internal): `POST /predict/fraud`, `POST /predict/forecast`,
 
 ---
 
+## Admin profile, branding and alerts
+
+The admin (only) can edit their own profile at **Settings**: name, designation,
+email, phone, photo, and password. Handlers act on the id inside the JWT, never
+on one from the request body, so no account can edit another. To open profile
+editing to every role, remove `requireRole('admin')` from the five `/profile`
+lines in `backend/src/routes/index.js`.
+
+**Photos** are centre-cropped and resized to 256px *in the browser* before
+upload — a 1.4 MB phone photo becomes about 4 KB. That is why avatars live in a
+database column instead of requiring S3 or Vercel Blob. The server independently
+rejects non-images and anything over 400 KB, because a browser-side check
+protects nobody.
+
+**Pump details** (name, oil company, address, GSTIN, logo) replace the product
+name on the sign-in screen, in the sidebar, on the browser tab and on every
+invoice. There is exactly one settings row, enforced by `CHECK (id = 1)`.
+Reseeding deliberately leaves it alone: branding is configuration, not demo data.
+
+### Notifications
+
+Two events fan out to admins who opt in:
+
+| Event | Fires when |
+|---|---|
+| `fraud_alert` | the anomaly model flags a fill, with vehicle, amount and reason |
+| `credit_limit` | a fleet passes 90% of its limit — before a fill has to be refused |
+
+Every message is written to the `notifications` table **before** any provider is
+called, so there is an auditable record of what the system decided to send even
+when nothing is configured. Those rows read `skipped`, not silence. Sending never
+blocks the attendant: a slow email API is not somebody's problem while a truck
+waits at the pump.
+
+To switch email on, add these to the API project and redeploy:
+
+```
+RESEND_API_KEY=re_xxxxxxxx
+NOTIFY_FROM_EMAIL=alerts@yourdomain.com
+NOTIFY_FROM_NAME=F.M. Amin & Co.
+```
+
+Until then the app works exactly the same and the UI says plainly that nothing
+is being delivered.
+
+**SMS is deliberately not enabled.** Indian numbers require DLT registration
+with TRAI — the business registered with an operator and every template
+pre-approved, typically one to two weeks with GST documents. The MSG91 and
+Twilio code paths are in place; supplying `MSG91_AUTH_KEY` and
+`MSG91_TEMPLATE_ID` turns them on with no code change.
+
+### Migrations
+
+Schema changes are versioned under `database/migrations/` and tracked in a
+`schema_migrations` table:
+
+```bash
+npm run migrate
+```
+
+It is safe to run repeatedly. `schema.sql` DROPs every table, so it only runs on
+an empty database — an existing installation is recorded as already baselined.
+
+> **Order matters on an existing deployment.** The login query now reads
+> columns that migration `001` adds. Run `migrate` against the production
+> database *before* deploying the new API, or sign-in will fail until you do.
+
 ## Deployment
 
 Live: **https://fleet-credit-tracker.vercel.app**
