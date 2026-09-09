@@ -4,6 +4,7 @@ import { FileText, Printer } from 'lucide-react';
 import api, { errorMessage } from '../../lib/api';
 import { moneyExact, money, litres, num } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
+import { useBranding } from '../../context/BrandingContext';
 import { PageHeader } from '../../components/AppLayout';
 import {
   Card, CardContent, Table, Th, Td, Button, Select,
@@ -26,6 +27,7 @@ const monthOptions = () => {
 
 export default function InvoicePage() {
   const { user } = useAuth();
+  const brand = useBranding();
   const months = monthOptions();
 
   const [month, setMonth] = useState(months[0].value);
@@ -65,6 +67,28 @@ export default function InvoicePage() {
         ) : (
           <Card className="mx-auto max-w-3xl print:max-w-none">
             <CardContent className="p-8">
+              {/* ------------------------ Issuer letterhead ---------------- */}
+              <div className="mb-6 flex items-start justify-between gap-6 border-b border-line pb-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  {brand.logo && (
+                    <img src={brand.logo} alt="" className="size-11 shrink-0 object-contain" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold tracking-[-0.02em] text-ink">
+                      {brand.pump_name}
+                    </p>
+                    {brand.oil_company && (
+                      <p className="text-[11.5px] text-ink-3">
+                        Authorised dealer · {brand.oil_company}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {brand.city && (
+                  <p className="shrink-0 text-right text-[11.5px] text-ink-3">{brand.city}</p>
+                )}
+              </div>
+
               {/* --------------------------- Letterhead ------------------- */}
               <div className="flex flex-wrap items-start justify-between gap-6 border-b border-line pb-6">
                 <div>

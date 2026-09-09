@@ -13,6 +13,7 @@
 import { query, withTransaction } from '../config/db.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { scoreTransaction } from '../utils/mlClient.js';
+import { notifyAsync } from '../utils/notifier.js';
 import { hourAtPump } from '../utils/time.js';
 
 export const listTransactions = asyncHandler(async (req, res) => {
@@ -135,10 +136,51 @@ export const createTransaction = asyncHandler(async (req, res) => {
     return ins.rows[0];
   });
 
+  // --- 6. Tell the admins, without making the attendant wait for it ---------
+  const remaining = Number((available - total_cost).toFixed(2));
+  const utilisation = Number(vehicle.credit_limit) > 0
+    ? ((Number(vehicle.credit_limit) - remaining) / Number(vehicle.credit_limit)) * 100
+    : 0;
+
+  if (verdict.is_flagged) {
+    notifyAsync('fraud_alert', {
+      subject: `Suspicious fill flagged — ${vehicle.license_plate}`,
+      body:
+        `A fuelling was flagged by the anomaly model.\n\n` +
+        `Vehicle:   ${vehicle.license_plate}\n` +
+        `Client:    ${vehicle.company_name}\n` +
+        `Volume:    ${litres} L\n` +
+        `Amount:    Rs ${total_cost.toFixed(2)}\n` +
+        `Risk:      ${verdict.fraud_score ?? 'n/a'}\n` +
+        `Attendant: ${req.user.username}\n\n` +
+        `Reason: ${verdict.reason || 'Statistical anomaly.'}\n\n` +
+        `Review it in the Fraud alerts screen.`,
+      sms:
+        `FLAGGED: ${vehicle.license_plate} (${vehicle.company_name}) ` +
+        `${litres}L Rs${total_cost.toFixed(0)}. ${(verdict.reason || 'Anomaly').slice(0, 90)}`,
+    });
+  }
+
+  // Warn once the client is close to the ceiling, not only when they hit it —
+  // by the time a fill is refused, a truck is already standing at the pump.
+  if (utilisation >= 90) {
+    notifyAsync('credit_limit', {
+      subject: `Credit nearly exhausted — ${vehicle.company_name}`,
+      body:
+        `${vehicle.company_name} has used ${utilisation.toFixed(1)}% of its credit limit.\n\n` +
+        `Limit:     Rs ${Number(vehicle.credit_limit).toFixed(2)}\n` +
+        `Remaining: Rs ${remaining.toFixed(2)}\n\n` +
+        `Further fuelling will be refused once the limit is reached.`,
+      sms:
+        `${vehicle.company_name} at ${utilisation.toFixed(0)}% of credit limit. ` +
+        `Rs${remaining.toFixed(0)} left.`,
+    });
+  }
+
   res.status(201).json({
     transaction: saved,
     vehicle: { license_plate: vehicle.license_plate, company_name: vehicle.company_name },
-    credit_remaining: Number((available - total_cost).toFixed(2)),
+    credit_remaining: remaining,
     ml: {
       available: verdict.ml_available,
       is_flagged: verdict.is_flagged,

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth, HOME_FOR_ROLE } from './context/AuthContext';
+import { BrandingProvider } from './context/BrandingContext';
 import AppLayout from './components/AppLayout';
 import { PageLoader } from './components/ui';
 
@@ -7,6 +8,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ClientsPage from './pages/admin/ClientsPage';
 import AlertsPage from './pages/admin/AlertsPage';
+import SettingsPage from './pages/admin/SettingsPage';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import VehiclesPage from './pages/manager/VehiclesPage';
 import InvoicePage from './pages/manager/InvoicePage';
@@ -40,7 +42,8 @@ function RoleHome() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrandingProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
 
@@ -49,6 +52,7 @@ export default function App() {
             <Route path="/admin"         element={<Protected roles={['admin']}><AdminDashboard /></Protected>} />
             <Route path="/admin/clients" element={<Protected roles={['admin']}><ClientsPage /></Protected>} />
             <Route path="/admin/alerts"  element={<Protected roles={['admin']}><AlertsPage /></Protected>} />
+            <Route path="/admin/settings" element={<Protected roles={['admin']}><SettingsPage /></Protected>} />
 
             {/* ----------------------------- Manager ------------------------ */}
             <Route path="/fleet"          element={<Protected roles={['manager']}><ManagerDashboard /></Protected>} />
@@ -62,7 +66,8 @@ export default function App() {
           <Route path="/" element={<RoleHome />} />
           <Route path="*" element={<RoleHome />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </BrandingProvider>
     </AuthProvider>
   );
 }

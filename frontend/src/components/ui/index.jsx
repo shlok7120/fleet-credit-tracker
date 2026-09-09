@@ -315,3 +315,101 @@ export const ThemeToggle = ({ className }) => {
     </button>
   );
 };
+
+/* ========================================================== Avatar ====== */
+const AVATAR_SIZES = {
+  sm: 'size-8 text-[11px]',
+  md: 'size-10 text-xs',
+  lg: 'size-16 text-lg',
+  xl: 'size-24 text-2xl',
+};
+
+/** Falls back to initials on a brand gradient when there is no photo. */
+export const Avatar = ({ src, name = '', size = 'md', className }) => {
+  const initials = name
+    .split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+
+  return (
+    <div
+      className={cn(
+        'grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold text-white',
+        'bg-linear-to-br from-brand-500 to-accent-600',
+        'ring-1 ring-[var(--glass-border)] shadow-[0_1px_0_rgba(255,255,255,0.35)_inset]',
+        AVATAR_SIZES[size], className
+      )}
+    >
+      {src
+        ? <img src={src} alt={name} className="size-full object-cover" />
+        : <span>{initials}</span>}
+    </div>
+  );
+};
+
+/* ========================================================== Switch ====== */
+export const Switch = ({ checked, onChange, disabled, label, hint, id }) => (
+  <label
+    htmlFor={id}
+    className={cn(
+      'flex items-start justify-between gap-4 rounded-xl px-3 py-2.5 transition-colors',
+      disabled ? 'opacity-50' : 'cursor-pointer hover:bg-[var(--glass-bg)]'
+    )}
+  >
+    <span className="min-w-0">
+      <span className="block text-[13px] font-medium text-ink">{label}</span>
+      {hint && <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink-3">{hint}</span>}
+    </span>
+
+    <span className="relative mt-0.5 shrink-0">
+      <input
+        id={id}
+        type="checkbox"
+        className="peer sr-only"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span
+        className={cn(
+          'block h-6 w-10 rounded-full transition-colors duration-200',
+          'bg-[var(--track)] peer-checked:bg-brand-500',
+          'peer-focus-visible:outline peer-focus-visible:outline-2',
+          'peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-500'
+        )}
+      />
+      <span
+        className={cn(
+          'pointer-events-none absolute left-0.5 top-0.5 size-5 rounded-full bg-white',
+          'shadow-[0_1px_3px_rgba(15,23,42,0.35)] transition-transform duration-200',
+          checked && 'translate-x-4'
+        )}
+      />
+    </span>
+  </label>
+);
+
+/* ============================================================ Tabs ====== */
+export const Tabs = ({ tabs, active, onChange, className }) => (
+  <div className={cn('glass-quiet inline-flex gap-1 p-1', className)}>
+    {tabs.map(({ id, label, icon: Icon }) => (
+      <button
+        key={id}
+        onClick={() => onChange(id)}
+        className={cn(
+          'relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium',
+          'transition-all duration-200 whitespace-nowrap',
+          active === id
+            ? 'bg-[var(--glass-bg-strong)] text-ink shadow-[0_1px_0_var(--glass-specular)_inset]'
+            : 'text-ink-2 hover:text-ink'
+        )}
+      >
+        {Icon && <Icon className="size-4" />}
+        {label}
+      </button>
+    ))}
+  </div>
+);
+
+/* ==================================================== Section header ==== */
+export const FieldRow = ({ children, className }) => (
+  <div className={cn('grid gap-4 sm:grid-cols-2', className)}>{children}</div>
+);

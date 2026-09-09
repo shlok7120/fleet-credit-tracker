@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Fuel, Lock, User, ShieldCheck, TriangleAlert, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth, HOME_FOR_ROLE } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import { Button, Input, Label, Alert, ThemeToggle } from '../components/ui';
 
 /**
@@ -26,6 +27,7 @@ const FEATURES = [
 
 export default function Login() {
   const { user, login } = useAuth();
+  const { pump_name, oil_company, logo } = useBranding();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ username: '', password: '' });
@@ -73,11 +75,24 @@ export default function Login() {
             className="pointer-events-none absolute -bottom-24 -right-10 size-80 rounded-full bg-accent-500/20 blur-3xl"
           />
 
-          <div className="relative flex items-center gap-2.5">
-            <div className="grid size-10 place-items-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_8px_20px_-8px_var(--color-brand-600)]">
-              <Fuel className="size-5" strokeWidth={2.2} />
+          <div className="relative flex min-w-0 items-center gap-3">
+            <div className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl ${
+              logo
+                ? 'glass-quiet'
+                : 'bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_8px_20px_-8px_var(--color-brand-600)]'
+            }`}>
+              {logo
+                ? <img src={logo} alt="" className="size-full object-contain p-1.5" />
+                : <Fuel className="size-5" strokeWidth={2.2} />}
             </div>
-            <span className="text-base font-semibold tracking-[-0.02em] text-ink">FleetCredit</span>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-[15px] font-semibold tracking-[-0.02em] text-ink">
+                {pump_name}
+              </p>
+              {oil_company && (
+                <p className="truncate text-[11px] text-ink-3">{oil_company}</p>
+              )}
+            </div>
           </div>
 
           <div className="relative">
@@ -108,18 +123,25 @@ export default function Login() {
           </div>
 
           <p className="relative pt-10 text-[11px] text-ink-3">
-            Corporate Fleet Credit Tracker · Internship Project
+            Corporate Fleet Credit Tracker
           </p>
         </div>
 
         {/* ---------------------------- Form panel --------------------------- */}
         <div className="relative flex items-center border-t border-[var(--glass-border)] bg-[var(--glass-bg-strong)] p-8 sm:p-10 lg:border-l lg:border-t-0">
           <div className="w-full">
-            <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-              <div className="grid size-9 place-items-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white">
-                <Fuel className="size-[18px]" strokeWidth={2.2} />
+            <div className="mb-8 flex min-w-0 items-center gap-2.5 lg:hidden">
+              <div className={`grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl ${
+                logo ? 'glass-quiet' : 'bg-linear-to-br from-brand-400 to-brand-600 text-white'
+              }`}>
+                {logo
+                  ? <img src={logo} alt="" className="size-full object-contain p-1" />
+                  : <Fuel className="size-[18px]" strokeWidth={2.2} />}
               </div>
-              <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">FleetCredit</span>
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-[14px] font-semibold tracking-[-0.02em] text-ink">{pump_name}</p>
+                {oil_company && <p className="truncate text-[10.5px] text-ink-3">{oil_company}</p>}
+              </div>
             </div>
 
             <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-ink">Sign in</h2>

@@ -37,13 +37,31 @@ export function AuthProvider({ children }) {
     }
   };
 
+  /**
+   * Re-read the signed-in user from the server.
+   *
+   * Editing your own profile changes the name and photo the sidebar renders,
+   * so without this the header keeps showing the old details until the next
+   * sign-in.
+   */
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data.user);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    } catch { /* a stale header is not worth surfacing an error for */ }
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
+  const value = useMemo(
+    () => ({ user, loading, login, logout, refreshUser }),
+    [user, loading]
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

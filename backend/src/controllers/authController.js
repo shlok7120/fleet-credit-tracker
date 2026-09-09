@@ -46,7 +46,8 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   const { rows } = await query(
-    `SELECT user_id, username, full_name, password_hash, role, is_active
+    `SELECT user_id, username, full_name, designation, password_hash, role,
+            is_active, email, phone, avatar
      FROM users WHERE username = $1`,
     [username.toLowerCase().trim()]
   );
@@ -75,7 +76,11 @@ export const login = asyncHandler(async (req, res) => {
       user_id: user.user_id,
       username: user.username,
       full_name: user.full_name,
+      designation: user.designation,
       role: user.role,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
       client_id: clientId,
     },
   });
@@ -83,7 +88,9 @@ export const login = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   const { rows } = await query(
-    'SELECT user_id, username, full_name, role, created_at FROM users WHERE user_id = $1',
+    `SELECT user_id, username, full_name, designation, role, email, phone,
+            avatar, created_at
+     FROM users WHERE user_id = $1`,
     [req.user.userId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'User not found.' });

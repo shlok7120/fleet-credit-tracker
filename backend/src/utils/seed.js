@@ -16,13 +16,16 @@ const PRICE = { petrol: 104.5, diesel: 92.3, cng: 76.0 };
 const rand = (min, max) => Math.random() * (max - min) + min;
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// [username, full_name, password, role, designation]
+// The admin is deliberately generic — the real proprietor sets their own name,
+// photo, email and phone from Settings → My profile after first sign-in.
 const USERS = [
-  ['admin',    'R. Deshmukh (Pump Admin)', 'admin123',     'admin'],
-  ['sunita',   'Sunita Rao',               'attendant123', 'attendant'],
-  ['imran',    'Imran Shaikh',             'attendant123', 'attendant'],
-  ['mgr_bluestar', 'Anil Kulkarni',        'manager123',   'manager'],
-  ['mgr_swiftlog', 'Priya Menon',          'manager123',   'manager'],
-  ['mgr_greencab', 'Rahul Jadhav',         'manager123',   'manager'],
+  ['admin',        'Pump Administrator', 'admin123',     'admin',     'Proprietor'],
+  ['sunita',       'Sunita Rao',         'attendant123', 'attendant', 'Forecourt attendant'],
+  ['imran',        'Imran Shaikh',       'attendant123', 'attendant', 'Forecourt attendant'],
+  ['mgr_bluestar', 'Anil Kulkarni',      'manager123',   'manager',   'Fleet manager'],
+  ['mgr_swiftlog', 'Priya Menon',        'manager123',   'manager',   'Fleet manager'],
+  ['mgr_greencab', 'Rahul Jadhav',       'manager123',   'manager',   'Fleet manager'],
 ];
 
 const CLIENTS = [
@@ -54,17 +57,20 @@ const VEHICLES = [
 
 async function main() {
   console.log('› Clearing existing data…');
-  await query('TRUNCATE transactions, vehicles, clients, users RESTART IDENTITY CASCADE');
+  // pump_settings and schema_migrations are deliberately NOT truncated: the
+  // pump's own branding is configuration, not demo data, and must survive a
+  // reseed.
+  await query('TRUNCATE notifications, transactions, vehicles, clients, users RESTART IDENTITY CASCADE');
 
   // ---------------------------------------------------------------- users
   console.log('› Creating users…');
   const userIds = {};
-  for (const [username, full_name, password, role] of USERS) {
+  for (const [username, full_name, password, role, designation] of USERS) {
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (username, full_name, password_hash, role)
-       VALUES ($1,$2,$3,$4) RETURNING user_id`,
-      [username, full_name, hash, role]
+      `INSERT INTO users (username, full_name, password_hash, role, designation)
+       VALUES ($1,$2,$3,$4,$5) RETURNING user_id`,
+      [username, full_name, hash, role, designation]
     );
     userIds[username] = rows[0].user_id;
   }

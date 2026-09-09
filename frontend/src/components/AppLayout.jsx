@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Fuel, LayoutDashboard, Building2, TriangleAlert, Truck,
-  FileText, LogOut, Gauge,
+  FileText, LogOut, Gauge, Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import { cn } from '../lib/utils';
-import { ThemeToggle } from './ui';
+import { ThemeToggle, Avatar } from './ui';
 
 /** Which sidebar links each role is allowed to see. */
 const NAV_BY_ROLE = {
@@ -14,6 +15,7 @@ const NAV_BY_ROLE = {
     { to: '/admin/clients',  label: 'Clients',      icon: Building2 },
     { to: '/admin/alerts',   label: 'Fraud alerts', icon: TriangleAlert },
     { to: '/dispenser',      label: 'Dispenser',    icon: Gauge },
+    { to: '/admin/settings', label: 'Settings',     icon: Settings },
   ],
   manager: [
     { to: '/fleet',          label: 'My fleet',     icon: LayoutDashboard, end: true },
@@ -31,22 +33,39 @@ const ROLE_LABEL = {
   attendant: 'Pump Attendant',
 };
 
-/** The mark, reused in the sidebar and on the login screen. */
+/**
+ * The mark, reused in the sidebar and on the login screen.
+ *
+ * Shows the pump's own name and uploaded logo when they have been set, and
+ * falls back to the product name and fuel glyph before then.
+ */
 export const Logo = ({ size = 'md' }) => {
+  const { pump_name, oil_company, logo } = useBranding();
   const box = size === 'sm' ? 'size-8 rounded-xl' : 'size-9 rounded-xl';
   const icon = size === 'sm' ? 'size-4' : 'size-[18px]';
+
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex min-w-0 items-center gap-2.5">
       <div
         className={cn(
-          box,
-          'grid place-items-center text-white bg-linear-to-br from-brand-400 to-brand-600',
-          'shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_6px_16px_-6px_var(--color-brand-600)]'
+          box, 'grid shrink-0 place-items-center overflow-hidden',
+          logo
+            ? 'glass-quiet'
+            : 'text-white bg-linear-to-br from-brand-400 to-brand-600 shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_6px_16px_-6px_var(--color-brand-600)]'
         )}
       >
-        <Fuel className={icon} strokeWidth={2.2} />
+        {logo
+          ? <img src={logo} alt="" className="size-full object-contain p-1" />
+          : <Fuel className={icon} strokeWidth={2.2} />}
       </div>
-      <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">FleetCredit</span>
+      <div className="min-w-0 leading-tight">
+        <p className="truncate text-[14px] font-semibold tracking-[-0.02em] text-ink">
+          {pump_name}
+        </p>
+        {oil_company && (
+          <p className="truncate text-[10.5px] text-ink-3">{oil_company}</p>
+        )}
+      </div>
     </div>
   );
 };
@@ -66,9 +85,6 @@ export default function AppLayout() {
   const links = NAV_BY_ROLE[user.role] || [];
 
   const signOut = () => { logout(); navigate('/login', { replace: true }); };
-
-  const initials = user.full_name
-    .split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
   return (
     <div className="flex min-h-full gap-0 md:gap-4 md:p-4">
@@ -102,12 +118,12 @@ export default function AppLayout() {
 
         <div className="p-3">
           <div className="glass-quiet flex items-center gap-2.5 p-2.5">
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-linear-to-br from-brand-500 to-accent-600 text-[11px] font-semibold text-white">
-              {initials}
-            </div>
+            <Avatar src={user.avatar} name={user.full_name} size="sm" className="rounded-lg" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12.5px] font-medium text-ink">{user.full_name}</p>
-              <p className="truncate text-[11px] text-ink-3">{ROLE_LABEL[user.role]}</p>
+              <p className="truncate text-[11px] text-ink-3">
+                {user.designation || ROLE_LABEL[user.role]}
+              </p>
             </div>
           </div>
 
