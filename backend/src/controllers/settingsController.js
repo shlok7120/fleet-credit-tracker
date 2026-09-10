@@ -54,29 +54,33 @@ export const updateSettings = asyncHandler(async (req, res) => {
     }
   }
 
+  // Same "was it sent?" flags as the profile update, and for the same reason:
+  // an address the proprietor deletes must actually disappear.
+  const sent = (v) => v !== undefined;
+  const str = (v) => (v === undefined || v === null ? null : String(v).trim() || null);
+
   const { rows } = await query(
     `UPDATE pump_settings SET
        pump_name     = COALESCE($1, pump_name),
-       oil_company   = COALESCE($2, oil_company),
-       address       = COALESCE($3, address),
-       city          = COALESCE($4, city),
-       gstin         = COALESCE($5, gstin),
-       contact_email = COALESCE($6, contact_email),
-       contact_phone = COALESCE($7, contact_phone),
-       logo          = CASE WHEN $8::boolean THEN $9 ELSE logo END,
+       oil_company   = CASE WHEN $2::boolean  THEN $3  ELSE oil_company END,
+       address       = CASE WHEN $4::boolean  THEN $5  ELSE address END,
+       city          = CASE WHEN $6::boolean  THEN $7  ELSE city END,
+       gstin         = CASE WHEN $8::boolean  THEN $9  ELSE gstin END,
+       contact_email = CASE WHEN $10::boolean THEN $11 ELSE contact_email END,
+       contact_phone = CASE WHEN $12::boolean THEN $13 ELSE contact_phone END,
+       logo          = CASE WHEN $14::boolean THEN $15 ELSE logo END,
        updated_at    = NOW()
      WHERE id = 1
      RETURNING *`,
     [
       pump_name === undefined ? null : String(pump_name).trim(),
-      oil_company === undefined ? null : String(oil_company).trim() || null,
-      address === undefined ? null : String(address).trim() || null,
-      city === undefined ? null : String(city).trim() || null,
-      gstin === undefined ? null : String(gstin).trim().toUpperCase() || null,
-      contact_email === undefined ? null : String(contact_email).trim().toLowerCase() || null,
-      contact_phone === undefined ? null : String(contact_phone).trim() || null,
-      cleanLogo !== undefined,
-      cleanLogo ?? null,
+      sent(oil_company),   str(oil_company),
+      sent(address),       str(address),
+      sent(city),          str(city),
+      sent(gstin),         gstin ? String(gstin).trim().toUpperCase() : null,
+      sent(contact_email), contact_email ? String(contact_email).trim().toLowerCase() : null,
+      sent(contact_phone), str(contact_phone),
+      cleanLogo !== undefined, cleanLogo ?? null,
     ]
   );
 

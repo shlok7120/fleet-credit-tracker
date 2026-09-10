@@ -65,27 +65,33 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   const cleanAvatar = avatar === undefined ? undefined : validateAvatar(avatar);
 
+  // Each optional field carries a "was it sent?" flag alongside its value.
+  // COALESCE cannot express this: an emptied field and an untouched field both
+  // arrive as NULL, so COALESCE would silently keep the old value and make
+  // clearing a wrong email impossible.
+  const sent = (v) => v !== undefined;
+  const str = (v) => (v === undefined || v === null ? null : String(v).trim() || null);
+
   const { rows } = await query(
     `UPDATE users SET
        full_name     = COALESCE($2, full_name),
-       designation   = COALESCE($3, designation),
-       email         = COALESCE($4, email),
-       phone         = COALESCE($5, phone),
-       avatar        = CASE WHEN $6::boolean THEN $7 ELSE avatar END,
-       notify_email  = COALESCE($8, notify_email),
-       notify_sms    = COALESCE($9, notify_sms),
-       notify_events = COALESCE($10, notify_events),
+       designation   = CASE WHEN $3::boolean  THEN $4  ELSE designation END,
+       email         = CASE WHEN $5::boolean  THEN $6  ELSE email END,
+       phone         = CASE WHEN $7::boolean  THEN $8  ELSE phone END,
+       avatar        = CASE WHEN $9::boolean  THEN $10 ELSE avatar END,
+       notify_email  = COALESCE($11, notify_email),
+       notify_sms    = COALESCE($12, notify_sms),
+       notify_events = COALESCE($13, notify_events),
        updated_at    = NOW()
      WHERE user_id = $1
      RETURNING ${PROFILE_COLUMNS}`,
     [
       req.user.userId,
       full_name === undefined ? null : String(full_name).trim(),
-      designation === undefined ? null : String(designation).trim() || null,
-      email === undefined ? null : String(email).trim().toLowerCase() || null,
-      phone === undefined ? null : String(phone).trim() || null,
-      cleanAvatar !== undefined,           // was avatar part of this request?
-      cleanAvatar ?? null,                 // …and what should it become
+      sent(designation), str(designation),
+      sent(email),       email ? String(email).trim().toLowerCase() : null,
+      sent(phone),       str(phone),
+      cleanAvatar !== undefined, cleanAvatar ?? null,
       notify_email === undefined ? null : Boolean(notify_email),
       notify_sms === undefined ? null : Boolean(notify_sms),
       notify_events === undefined ? null : JSON.stringify(notify_events),

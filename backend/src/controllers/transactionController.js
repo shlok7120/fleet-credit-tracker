@@ -13,7 +13,7 @@
 import { query, withTransaction } from '../config/db.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { scoreTransaction } from '../utils/mlClient.js';
-import { notifyAsync } from '../utils/notifier.js';
+import { notify } from '../utils/notifier.js';
 import { hourAtPump } from '../utils/time.js';
 
 export const listTransactions = asyncHandler(async (req, res) => {
@@ -136,14 +136,17 @@ export const createTransaction = asyncHandler(async (req, res) => {
     return ins.rows[0];
   });
 
-  // --- 6. Tell the admins, without making the attendant wait for it ---------
+  // --- 6. Tell the admins ---------------------------------------------------
   const remaining = Number((available - total_cost).toFixed(2));
   const utilisation = Number(vehicle.credit_limit) > 0
     ? ((Number(vehicle.credit_limit) - remaining) / Number(vehicle.credit_limit)) * 100
     : 0;
 
+  // Collected rather than fired individually so both go out in one await.
+  const alerts = [];
+
   if (verdict.is_flagged) {
-    notifyAsync('fraud_alert', {
+    alerts.push(['fraud_alert', {
       subject: `Suspicious fill flagged — ${vehicle.license_plate}`,
       body:
         `A fuelling was flagged by the anomaly model.\n\n` +
@@ -158,13 +161,13 @@ export const createTransaction = asyncHandler(async (req, res) => {
       sms:
         `FLAGGED: ${vehicle.license_plate} (${vehicle.company_name}) ` +
         `${litres}L Rs${total_cost.toFixed(0)}. ${(verdict.reason || 'Anomaly').slice(0, 90)}`,
-    });
+    }]);
   }
 
   // Warn once the client is close to the ceiling, not only when they hit it —
   // by the time a fill is refused, a truck is already standing at the pump.
   if (utilisation >= 90) {
-    notifyAsync('credit_limit', {
+    alerts.push(['credit_limit', {
       subject: `Credit nearly exhausted — ${vehicle.company_name}`,
       body:
         `${vehicle.company_name} has used ${utilisation.toFixed(1)}% of its credit limit.\n\n` +
@@ -174,7 +177,17 @@ export const createTransaction = asyncHandler(async (req, res) => {
       sms:
         `${vehicle.company_name} at ${utilisation.toFixed(0)}% of credit limit. ` +
         `Rs${remaining.toFixed(0)} left.`,
-    });
+    }]);
+  }
+
+  // A failure here must never turn a recorded sale into an error for the
+  // attendant — the fuel has already been dispensed and billed.
+  if (alerts.length) {
+    try {
+      await Promise.all(alerts.map(([event, msg]) => notify(event, msg)));
+    } catch (err) {
+      console.warn('[txn] notification dispatch failed:', err.message);
+    }
   }
 
   res.status(201).json({

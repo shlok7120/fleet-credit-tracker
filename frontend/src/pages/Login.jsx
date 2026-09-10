@@ -60,7 +60,7 @@ export default function Login() {
           feature list. */}
       <div className="glass animate-rise grid w-full max-w-5xl overflow-hidden lg:min-h-[600px] lg:grid-cols-[1.05fr_1fr]">
         {/* --------------------------- Brand panel --------------------------- */}
-        <div className="relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
+        <div className="relative hidden flex-col justify-between gap-10 overflow-hidden p-10 lg:flex">
           {/* Colour wash confined to this half, so the form side stays calm. */}
           <div
             aria-hidden
@@ -122,7 +122,7 @@ export default function Login() {
             </div>
           </div>
 
-          <p className="relative pt-10 text-[11px] text-ink-3">
+          <p className="relative text-[11px] text-ink-3">
             Corporate Fleet Credit Tracker
           </p>
         </div>

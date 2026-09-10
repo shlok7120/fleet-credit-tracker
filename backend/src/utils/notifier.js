@@ -218,11 +218,3 @@ export const notifyUser = async (userId, event, msg) => {
   if (!rows[0]) return { queued: 0 };
   return { queued: await deliverTo(rows[0], event, msg) };
 };
-
-/**
- * Fire and forget. The caller is a request handler that must return promptly;
- * a slow or broken provider is not the attendant's problem.
- */
-export const notifyAsync = (...args) => {
-  notify(...args).catch((err) => console.warn('[notify] unhandled:', err.message));
-};

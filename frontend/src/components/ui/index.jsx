@@ -275,18 +275,40 @@ export const Alert = ({ tone = 'red', title, children, className }) => (
 /* ===================================================== ThemeToggle ====== */
 const THEME_KEY = 'fct_theme';
 
-/** Reads and writes the theme on <html data-theme>, matching index.html. */
+/**
+ * Reads and writes the theme on <html data-theme>, matching index.html.
+ *
+ * The layout renders two toggles — one in the sidebar, one in the mobile
+ * header — and only CSS decides which is visible. With independent state the
+ * hidden one drifted out of step, so after switching to dark it still offered
+ * "switch to dark" and showed the wrong icon. Treating the DOM attribute as
+ * the single source of truth and observing it keeps every instance in sync,
+ * however many there are.
+ */
 export const useTheme = () => {
-  const [theme, setTheme] = useState(
+  const [theme, setThemeState] = useState(
     () => document.documentElement.dataset.theme || 'light'
   );
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem(THEME_KEY, theme); } catch { /* private mode */ }
-  }, [theme]);
+    const el = document.documentElement;
+    const sync = () => setThemeState(el.dataset.theme || 'light');
 
-  return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))];
+    const observer = new MutationObserver(sync);
+    observer.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+
+    sync();   // catch a change made between first render and this effect
+    return () => observer.disconnect();
+  }, []);
+
+  const toggle = () => {
+    const next = (document.documentElement.dataset.theme || 'light') === 'dark'
+      ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;   // observer updates state
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* private mode */ }
+  };
+
+  return [theme, toggle];
 };
 
 export const ThemeToggle = ({ className }) => {
