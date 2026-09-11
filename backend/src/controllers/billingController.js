@@ -237,8 +237,23 @@ export const sendInvoice = asyncHandler(async (req, res) => {
  * check, anyone who found the URL could fire invoices at your clients.
  */
 export const runScheduledBilling = asyncHandler(async (req, res) => {
+  // Fail CLOSED. An earlier version skipped the check whenever CRON_SECRET was
+  // unset, which meant a missing or misspelled variable in production silently
+  // published an endpoint that emails every client. A security control whose
+  // absence disables the control is not a control.
+  //
+  // Deployed and unconfigured  -> refuse outright (503)
+  // Deployed and configured    -> require the bearer token
+  // Local development          -> open, so the run can be exercised by hand
   const secret = process.env.CRON_SECRET;
-  if (secret) {
+  const deployed = Boolean(process.env.VERCEL) || process.env.NODE_ENV === 'production';
+
+  if (deployed) {
+    if (!secret) {
+      return res.status(503).json({
+        error: 'Scheduled billing is not configured. Set CRON_SECRET on this project and redeploy.',
+      });
+    }
     const supplied = (req.headers.authorization || '').replace(/^Bearer /, '');
     if (supplied !== secret) return res.status(401).json({ error: 'Unauthorized.' });
   }
