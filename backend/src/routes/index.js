@@ -13,6 +13,7 @@ import * as dash from '../controllers/dashboardController.js';
 import * as profile from '../controllers/profileController.js';
 import * as settings from '../controllers/settingsController.js';
 import * as users from '../controllers/userController.js';
+import * as billing from '../controllers/billingController.js';
 
 const router = Router();
 
@@ -76,6 +77,15 @@ router.get('/dashboard/admin', requireAuth, requireRole('admin'), dash.adminDash
 router.get('/dashboard/manager', requireAuth, requireRole('manager'), dash.managerDashboard);
 router.get('/dashboard/attendant', requireAuth, requireRole('attendant', 'admin'), dash.attendantDashboard);
 router.get('/clients/:id/forecast', requireAuth, requireRole('admin', 'manager'), dash.clientForecast);
-router.get('/clients/:id/invoice', requireAuth, requireRole('admin', 'manager'), dash.clientInvoice);
+/* ----------------------------- Billing --------------------------- */
+// Invoices run on fortnightly cycles: 1st–15th and 16th–end of month.
+router.get('/clients/:id/invoice',      requireAuth, requireRole('admin', 'manager'), billing.getInvoice);
+router.post('/clients/:id/invoice/send', requireAuth, requireRole('admin'), billing.sendInvoice);
+router.get('/billing/dispatches',        requireAuth, requireRole('admin'), billing.listDispatches);
+
+// Triggered by Vercel Cron each morning; only acts on the 1st and the 16th.
+// Guarded by CRON_SECRET rather than a session, since no user is signed in.
+router.post('/billing/run', billing.runScheduledBilling);
+router.get('/billing/run',  billing.runScheduledBilling);
 
 export default router;

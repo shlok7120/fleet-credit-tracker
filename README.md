@@ -255,6 +255,34 @@ name on the sign-in screen, in the sidebar, on the browser tab and on every
 invoice. There is exactly one settings row, enforced by `CHECK (id = 1)`.
 Reseeding deliberately leaves it alone: branding is configuration, not demo data.
 
+### Billing cycles
+
+Invoices run **fortnightly**: the 1st–15th and the 16th–end of month. A cycle is
+identified by a period string like `2026-09-H2`.
+
+Every boundary is computed in `PUMP_TIMEZONE`, never the server's. Timestamps
+are TIMESTAMPTZ and the servers run in UTC, so a fill at 00:30 IST on the 16th
+is 19:00 UTC on the 15th — read naively it lands in the wrong fortnight and the
+client receives an invoice that is genuinely wrong. Bounds are built as local
+midnight and are half-open `[start, end)`, so a fill at exactly midnight on the
+16th bills once, in the later cycle. Verified: the two halves of a month sum
+exactly to the whole month.
+
+`invoice_dispatches` records every invoice sent, with `UNIQUE (client_id,
+period)`. That constraint is the safeguard — the scheduled job may be retried,
+but a client can never receive the same fortnight twice, and the database
+enforces it rather than the job remembering.
+
+Invoices go to `clients.billing_email`, falling back to the fleet manager's own
+address. A cycle with no fuelling is skipped rather than sent as a zero
+invoice, which would only train clients to ignore the emails.
+
+Dispatch is automatic via Vercel Cron (`backend/vercel.json`), which calls
+`/api/billing/run` daily at 03:00 UTC. On any day other than the 1st or 16th it
+does nothing. Set `CRON_SECRET` on the API project so the endpoint cannot be
+fired by anyone who finds the URL. Admins can also send manually from
+**Billing**.
+
 ### Staff accounts
 
 **Staff** (admin only) creates and removes the people who can sign in —

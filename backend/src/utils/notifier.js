@@ -32,6 +32,16 @@ const smsProvider = () => {
   return null;
 };
 
+/** Is email delivery possible at all right now? */
+export const emailConfigured = () => Boolean(emailProvider());
+
+/**
+ * Send one email directly, bypassing the per-user preference machinery.
+ * Invoices go to clients, who are not users of this system and have no
+ * notification settings of their own.
+ */
+export const sendEmailDirect = (args) => sendEmail(args);
+
 /** What the admin UI shows about delivery configuration. */
 export const providerStatus = () => ({
   email: { provider: emailProvider(), configured: Boolean(emailProvider()),

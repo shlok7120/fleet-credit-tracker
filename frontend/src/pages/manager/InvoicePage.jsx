@@ -11,48 +11,44 @@ import {
   PageLoader, Alert, EmptyState,
 } from '../../components/ui';
 
-/** The last six months, as {value: '2026-08', label: 'Aug 2026'}. */
-const monthOptions = () => {
-  const out = [];
-  const d = new Date();
-  for (let i = 0; i < 6; i++) {
-    out.push({
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
-    });
-    d.setMonth(d.getMonth() - 1);
-  }
-  return out;
-};
-
 export default function InvoicePage() {
   const { user } = useAuth();
   const brand = useBranding();
-  const months = monthOptions();
 
-  const [month, setMonth] = useState(months[0].value);
+  // Billing runs fortnightly: the 1st–15th and the 16th–end of month. The
+  // list of cycles comes from the server so the client and server can never
+  // disagree about where a boundary falls.
+  const [period, setPeriod] = useState('');
+  const [periods, setPeriods] = useState([]);
   const [invoice, setInvoice] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!user.client_id) { setError('No fleet is assigned to your account yet.'); return; }
     setInvoice(null);
-    api.get(`/clients/${user.client_id}/invoice`, { params: { month } })
-      .then(({ data }) => setInvoice(data))
+    api.get(`/clients/${user.client_id}/invoice`, { params: period ? { period } : {} })
+      .then(({ data }) => {
+        setInvoice(data);
+        setPeriods(data.periods || []);
+        if (!period) setPeriod(data.period);
+      })
       .catch((e) => setError(errorMessage(e)));
-  }, [month, user.client_id]);
+  }, [period, user.client_id]);
 
   if (error) return <div><Alert tone="red">{error}</Alert></div>;
 
   return (
     <div>
       <PageHeader
-        title="Monthly invoice"
-        description="Consolidated statement of every litre billed to your fleet."
+        title="Invoices"
+        description="Billed fortnightly — the 1st to the 15th, and the 16th to month end."
         actions={
           <div className="flex items-center gap-2">
-            <Select value={month} onChange={(e) => setMonth(e.target.value)} className="w-44 py-1.5 text-xs">
-              {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+            <Select value={period} onChange={(e) => setPeriod(e.target.value)}
+                    className="w-48 py-1.5 text-xs">
+              {periods.map((p) => (
+                <option key={p.period} value={p.period}>{p.label}</option>
+              ))}
             </Select>
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
               <Printer className="size-3.5" /> Print
@@ -108,18 +104,20 @@ export default function InvoicePage() {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                     Billing period
                   </p>
-                  <p className="mt-1 font-medium text-ink">
-                    {new Date(`${invoice.month}-01`).toLocaleDateString('en-IN',
-                      { month: 'long', year: 'numeric' })}
-                  </p>
+                  <p className="mt-1 font-medium text-ink">{invoice.period_label}</p>
                   <p className="mt-0.5 text-xs text-ink-3">
                     Generated {new Date(invoice.generated_at).toLocaleDateString('en-IN')}
                   </p>
+                  {invoice.dispatch?.status === 'sent' && (
+                    <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-300">
+                      Emailed {new Date(invoice.dispatch.created_at).toLocaleDateString('en-IN')}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {invoice.lines.length === 0 ? (
-                <EmptyState icon={FileText} title="No fuelling this month"
+                <EmptyState icon={FileText} title="No fuelling in this fortnight"
                             hint="Pick a different billing period from the dropdown above." />
               ) : (
                 <>

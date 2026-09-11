@@ -20,6 +20,7 @@ export const listClients = asyncHandler(async (req, res) => {
             c.contact_phone,
             c.credit_limit,
             c.current_balance,
+            c.billing_email,
             c.credit_limit - c.current_balance          AS available_credit,
             CASE WHEN c.credit_limit > 0
                  THEN ROUND((c.current_balance / c.credit_limit) * 100, 1)
@@ -67,7 +68,7 @@ export const getClient = asyncHandler(async (req, res) => {
 export const createClient = asyncHandler(async (req, res) => {
   const {
     company_name, contact_person, contact_phone, credit_limit,
-    manager_user_id, new_manager,
+    manager_user_id, new_manager, billing_email,
   } = req.body;
 
   if (!company_name || credit_limit == null) {
@@ -114,10 +115,13 @@ export const createClient = asyncHandler(async (req, res) => {
     }
 
     const { rows } = await db.query(
-      `INSERT INTO clients (company_name, contact_person, contact_phone, credit_limit, manager_user_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      `INSERT INTO clients
+         (company_name, contact_person, contact_phone, credit_limit, manager_user_id, billing_email)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [company_name.trim(), contact_person || null, contact_phone || null,
-       Number(credit_limit), managerId]
+       Number(credit_limit), managerId,
+       billing_email ? String(billing_email).trim().toLowerCase()
+                     : (new_manager?.email ? String(new_manager.email).trim().toLowerCase() : null)]
     );
     return rows[0];
   });
@@ -126,7 +130,10 @@ export const createClient = asyncHandler(async (req, res) => {
 });
 
 export const updateClient = asyncHandler(async (req, res) => {
-  const { company_name, contact_person, contact_phone, credit_limit, manager_user_id } = req.body;
+  const {
+    company_name, contact_person, contact_phone, credit_limit,
+    manager_user_id, billing_email,
+  } = req.body;
 
   const { rows } = await query(
     `UPDATE clients SET
@@ -134,10 +141,12 @@ export const updateClient = asyncHandler(async (req, res) => {
        contact_person  = COALESCE($3, contact_person),
        contact_phone   = COALESCE($4, contact_phone),
        credit_limit    = COALESCE($5, credit_limit),
-       manager_user_id = COALESCE($6, manager_user_id)
+       manager_user_id = COALESCE($6, manager_user_id),
+       billing_email   = COALESCE($7, billing_email)
      WHERE client_id = $1 RETURNING *`,
     [req.params.id, company_name ?? null, contact_person ?? null, contact_phone ?? null,
-     credit_limit ?? null, manager_user_id ?? null]
+     credit_limit ?? null, manager_user_id ?? null,
+     billing_email === undefined ? null : String(billing_email).trim().toLowerCase() || null]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Client not found.' });
   res.json(rows[0]);
