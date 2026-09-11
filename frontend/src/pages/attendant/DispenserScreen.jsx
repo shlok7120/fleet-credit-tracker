@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 
 import api, { errorMessage } from '../../lib/api';
-import { money, moneyExact, litres, num, dateTime } from '../../lib/utils';
+import { cn, money, moneyExact, litres, num, dateTime } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/AppLayout';
 import {
@@ -107,16 +107,48 @@ export default function DispenserScreen() {
       />
 
       <div>
-        {/* --------------------------- Shift totals -------------------------- */}
+        {/* --------------------------- Shift totals --------------------------
+            Two presentations of the same three figures.
+
+            On a phone — which is what an attendant actually holds at the
+            island — three full cards filled the entire first screen and pushed
+            the plate search below the fold. That is a scroll on every single
+            fill, dozens of times a shift, and the kind of friction that sends
+            staff back to the paper register. The compact strip keeps the
+            numbers visible while leaving the search above the fold.
+
+            On a desktop there is room to spare, so the richer cards stay. */}
         {shift && (
-          <div className="mb-5 grid gap-4 sm:grid-cols-3">
-            <StatCard icon={Gauge} tone="brand" label="Fills logged today"
-                      value={num(shift.today.txns_today)} />
-            <StatCard icon={Droplets} tone="green" label="Volume dispensed"
-                      value={litres(shift.today.liters_today)} />
-            <StatCard icon={IndianRupee} tone="amber" label="Value on credit"
-                      value={money(shift.today.value_today)} />
-          </div>
+          <>
+            {/* Phone: one line */}
+            <div className="glass-quiet mb-3 flex items-stretch divide-x divide-[var(--color-line-soft)] sm:hidden">
+              {[
+                [Gauge, 'Fills', num(shift.today.txns_today), 'text-brand-500'],
+                [Droplets, 'Volume', litres(shift.today.liters_today), 'text-emerald-500'],
+                [IndianRupee, 'Value', money(shift.today.value_today), 'text-orange-600'],
+              ].map(([Icon, label, value, tone]) => (
+                <div key={label} className="flex-1 px-3 py-2.5 text-center">
+                  <p className="flex items-center justify-center gap-1 text-[10px] font-medium uppercase tracking-[0.07em] text-ink-3">
+                    <Icon className={cn('size-3', tone)} strokeWidth={2.2} />
+                    {label}
+                  </p>
+                  <p className="tnum mt-1 truncate text-[15px] font-semibold leading-none tracking-[-0.02em] text-ink">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet and up: the full cards */}
+            <div className="mb-5 hidden gap-4 sm:grid sm:grid-cols-3">
+              <StatCard icon={Gauge} tone="brand" label="Fills logged today"
+                        value={num(shift.today.txns_today)} />
+              <StatCard icon={Droplets} tone="green" label="Volume dispensed"
+                        value={litres(shift.today.liters_today)} />
+              <StatCard icon={IndianRupee} tone="amber" label="Value on credit"
+                        value={money(shift.today.value_today)} />
+            </div>
+          </>
         )}
 
         <div className="grid gap-5 lg:grid-cols-5">
