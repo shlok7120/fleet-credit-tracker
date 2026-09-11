@@ -22,29 +22,35 @@
 =========================================================================== */
 
 @theme {
-  /* -- Brand ------------------------------------------------------------ */
-  --color-brand-50:  #eef4ff;
-  --color-brand-100: #dbe7ff;
-  --color-brand-200: #bed4ff;
-  --color-brand-300: #92b6ff;
-  --color-brand-400: #608eff;
-  --color-brand-500: #3d69fb;
-  --color-brand-600: #2648ef;
-  --color-brand-700: #1e36d4;
-  --color-brand-800: #1e2fab;
-  --color-brand-900: #1e2e87;
+  /* -- Brand: amber ------------------------------------------------------
+     Warm gold against charcoal. Note the knock-on effect: amber was also the
+     warning colour, so a warning badge would now be indistinguishable from a
+     brand one. Warnings were moved to orange (below) to keep that distinction
+     — a palette change that quietly erases a semantic difference is worse
+     than no palette change. */
+  --color-brand-50:  #fdf7ec;
+  --color-brand-100: #faeccd;
+  --color-brand-200: #f5d597;
+  --color-brand-300: #efba58;
+  --color-brand-400: #eca42e;
+  --color-brand-500: #e08c0c;
+  --color-brand-600: #c26f07;
+  --color-brand-700: #a1540b;
+  --color-brand-800: #834310;
+  --color-brand-900: #6d3811;
 
-  --color-accent-400: #a78bfa;
-  --color-accent-500: #8b5cf6;
-  --color-accent-600: #7c3aed;
+  /* Accent: a warm rose, used for gradients and the forecast series. */
+  --color-accent-400: #fb8a6a;
+  --color-accent-500: #f2683f;
+  --color-accent-600: #d94d26;
 
   /* -- Semantic surfaces & ink (overridden per theme below) ------------- */
-  --color-canvas:    #eef2fb;
-  --color-ink:       #0b1220;
-  --color-ink-2:     #55607a;
-  --color-ink-3:     #677085;
-  --color-line:      rgba(15, 23, 42, 0.10);
-  --color-line-soft: rgba(15, 23, 42, 0.06);
+  --color-canvas:    #f7f4ee;
+  --color-ink:       #1a1611;
+  --color-ink-2:     #5f574b;
+  --color-ink-3:     #766c5d;
+  --color-line:      rgba(26, 22, 17, 0.10);
+  --color-line-soft: rgba(26, 22, 17, 0.06);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -57,57 +63,57 @@
 --------------------------------------------------------------------------- */
 :root,
 [data-theme="light"] {
-  --color-canvas:    #eef2fb;
-  --color-ink:       #0b1220;
-  --color-ink-2:     #55607a;
-  --color-ink-3:     #677085;
-  --color-line:      rgba(15, 23, 42, 0.10);
-  --color-line-soft: rgba(15, 23, 42, 0.06);
+  --color-canvas:    #f7f4ee;
+  --color-ink:       #1a1611;
+  --color-ink-2:     #5f574b;
+  --color-ink-3:     #6e6556;
+  --color-line:      rgba(26, 22, 17, 0.10);
+  --color-line-soft: rgba(26, 22, 17, 0.06);
 
   /* The glass material itself */
   --glass-bg:        rgba(255, 255, 255, 0.58);
   --glass-bg-strong: rgba(255, 255, 255, 0.76);
   --glass-bg-hover:  rgba(255, 255, 255, 0.72);
   --glass-border:    rgba(255, 255, 255, 0.70);
-  --glass-ring:      rgba(15, 23, 42, 0.08);
+  --glass-ring:      rgba(26, 22, 17, 0.07);
   --glass-specular:  rgba(255, 255, 255, 0.95);
   --glass-blur:      20px;
   --glass-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 8px 24px -8px rgba(15, 23, 42, 0.12),
-      0 24px 56px -24px rgba(15, 23, 42, 0.18);
+      0 1px 2px rgba(46, 32, 12, 0.05),
+      0 8px 24px -8px rgba(46, 32, 12, 0.14),
+      0 24px 56px -24px rgba(46, 32, 12, 0.20);
   --glass-shadow-lift:
-      0 2px 4px rgba(15, 23, 42, 0.05),
-      0 14px 34px -10px rgba(15, 23, 42, 0.16),
-      0 32px 70px -28px rgba(15, 23, 42, 0.22);
+      0 2px 4px rgba(46, 32, 12, 0.06),
+      0 14px 34px -10px rgba(46, 32, 12, 0.18),
+      0 32px 70px -28px rgba(46, 32, 12, 0.24);
 
   /* Ambient field */
-  --amb-1: rgba(61, 105, 251, 0.30);
-  --amb-2: rgba(139, 92, 246, 0.26);
-  --amb-3: rgba(16, 185, 129, 0.20);
-  --amb-4: rgba(255, 255, 255, 0.85);
-  --noise-opacity: 0.030;
+  --amb-1: rgba(224, 140, 12, 0.26);
+  --amb-2: rgba(242, 104, 63, 0.22);
+  --amb-3: rgba(13, 148, 136, 0.14);
+  --amb-4: rgba(255, 253, 248, 0.88);
+  --noise-opacity: 0.032;
 
-  --field-bg:     rgba(255, 255, 255, 0.72);
-  --field-border: rgba(15, 23, 42, 0.14);
-  --field-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  --field-bg:     rgba(255, 255, 255, 0.75);
+  --field-border: rgba(26, 22, 17, 0.16);
+  --field-shadow: inset 0 1px 2px rgba(26, 22, 17, 0.06);
 
-  --track: rgba(15, 23, 42, 0.08);
+  --track: rgba(26, 22, 17, 0.09);
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --color-canvas:    #070b16;
-  --color-ink:       #eef1f8;
-  --color-ink-2:     #a3adc4;
-  --color-ink-3:     #8b95aa;
-  --color-line:      rgba(255, 255, 255, 0.10);
-  --color-line-soft: rgba(255, 255, 255, 0.06);
+  --color-canvas:    #100e0b;
+  --color-ink:       #f6f1e8;
+  --color-ink-2:     #c0b4a2;
+  --color-ink-3:     #a2947f;
+  --color-line:      rgba(255, 246, 232, 0.10);
+  --color-line-soft: rgba(255, 246, 232, 0.06);
 
-  --glass-bg:        rgba(255, 255, 255, 0.055);
-  --glass-bg-strong: rgba(255, 255, 255, 0.085);
-  --glass-bg-hover:  rgba(255, 255, 255, 0.10);
-  --glass-border:    rgba(255, 255, 255, 0.13);
+  --glass-bg:        rgba(255, 240, 220, 0.055);
+  --glass-bg-strong: rgba(255, 240, 220, 0.085);
+  --glass-bg-hover:  rgba(255, 240, 220, 0.105);
+  --glass-border:    rgba(255, 238, 214, 0.14);
   --glass-ring:      rgba(0, 0, 0, 0.45);
   --glass-specular:  rgba(255, 255, 255, 0.40);
   --glass-blur:      24px;
@@ -120,17 +126,17 @@
       0 16px 40px -12px rgba(0, 0, 0, 0.60),
       0 40px 80px -30px rgba(0, 0, 0, 0.75);
 
-  --amb-1: rgba(61, 105, 251, 0.34);
-  --amb-2: rgba(139, 92, 246, 0.30);
-  --amb-3: rgba(16, 185, 129, 0.18);
-  --amb-4: rgba(9, 14, 28, 0.0);
-  --noise-opacity: 0.055;
+  --amb-1: rgba(224, 140, 12, 0.30);
+  --amb-2: rgba(217, 77, 38, 0.26);
+  --amb-3: rgba(13, 148, 136, 0.16);
+  --amb-4: rgba(16, 14, 11, 0.0);
+  --noise-opacity: 0.058;
 
-  --field-bg:     rgba(255, 255, 255, 0.05);
-  --field-border: rgba(255, 255, 255, 0.16);
-  --field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  --field-bg:     rgba(255, 240, 220, 0.05);
+  --field-border: rgba(255, 238, 214, 0.17);
+  --field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28);
 
-  --track: rgba(255, 255, 255, 0.12);
+  --track: rgba(255, 240, 220, 0.13);
   color-scheme: dark;
 }
 

@@ -45,12 +45,14 @@ export const utilisationTone = (pct) => {
     text: 'text-rose-700 dark:text-rose-300', label: 'Critical',
   };
   if (pct >= 75) return {
-    bar: 'bg-linear-to-r from-amber-400 to-amber-600',
-    text: 'text-amber-700 dark:text-amber-300', label: 'High',
+    bar: 'bg-linear-to-r from-orange-400 to-orange-600',
+    text: 'text-orange-700 dark:text-orange-300', label: 'High',
   };
+  // Sky rather than brand: with an amber brand, a "Moderate" bar in brand
+  // colours would read as decoration instead of as a reading on a scale.
   if (pct >= 50) return {
-    bar: 'bg-linear-to-r from-brand-400 to-brand-600',
-    text: 'text-brand-700 dark:text-brand-300', label: 'Moderate',
+    bar: 'bg-linear-to-r from-sky-400 to-sky-600',
+    text: 'text-sky-700 dark:text-sky-300', label: 'Moderate',
   };
   return {
     bar: 'bg-linear-to-r from-emerald-400 to-emerald-600',

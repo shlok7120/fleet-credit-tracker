@@ -15,7 +15,7 @@ const readTokens = () => {
     axis:   v('--color-ink-3', '#8b95ab'),
     grid:   v('--color-line-soft', 'rgba(15,23,42,0.06)'),
     brand:  v('--color-brand-500', '#3d69fb'),
-    accent: v('--color-accent-500', '#8b5cf6'),
+    accent: v('--color-accent-500', '#f2683f'),
     muted:  v('--color-ink-2', '#55607a'),
     ink:    v('--color-ink', '#0b1220'),
 

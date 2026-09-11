@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Fuel, LayoutDashboard, Building2, TriangleAlert, Truck,
-  FileText, LogOut, Gauge, Settings,
+  FileText, LogOut, Gauge, Settings, Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
@@ -15,15 +15,18 @@ const NAV_BY_ROLE = {
     { to: '/admin/clients',  label: 'Clients',      icon: Building2 },
     { to: '/admin/alerts',   label: 'Fraud alerts', icon: TriangleAlert },
     { to: '/dispenser',      label: 'Dispenser',    icon: Gauge },
+    { to: '/admin/users',    label: 'Staff',        icon: Users },
     { to: '/admin/settings', label: 'Settings',     icon: Settings },
   ],
   manager: [
     { to: '/fleet',          label: 'My fleet',     icon: LayoutDashboard, end: true },
     { to: '/fleet/vehicles', label: 'Vehicles',     icon: Truck },
     { to: '/fleet/invoice',  label: 'Invoices',     icon: FileText },
+    { to: '/settings',       label: 'My profile',   icon: Settings },
   ],
   attendant: [
     { to: '/dispenser',      label: 'Dispenser',    icon: Gauge, end: true },
+    { to: '/settings',       label: 'My profile',   icon: Settings },
   ],
 };
 

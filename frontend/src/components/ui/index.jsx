@@ -6,7 +6,7 @@
  * language ("liquid glass") lives in index.css; this file composes it.
  */
 import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 /* ============================================================ Card ====== */
@@ -114,15 +114,19 @@ export const Select = ({ className, children, ...props }) => (
 );
 
 /* =========================================================== Badge ====== */
-/* A -600 text shade has enough contrast on white but goes muddy against the
-   dark canvas, so each tone lightens by two steps in dark mode. */
+/* Two things at work here.
+   1. A -600 text shade has enough contrast on white but goes muddy against the
+      dark canvas, so each tone lightens in dark mode.
+   2. The brand is now amber, so the warning tone moved to orange and the
+      informational tone to sky. Tone NAMES are unchanged so no call site had
+      to be touched, but a warning badge no longer looks like brand chrome. */
 const BADGE_TONES = {
   slate:  'bg-[var(--glass-bg-strong)] text-ink-2 ring-[var(--glass-border)]',
-  brand:  'bg-brand-500/12   text-brand-700   dark:text-brand-300   ring-brand-500/25',
+  brand:  'bg-brand-500/14   text-brand-700   dark:text-brand-300   ring-brand-500/30',
   green:  'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 ring-emerald-500/25',
-  amber:  'bg-amber-500/14   text-amber-700   dark:text-amber-300   ring-amber-500/25',
+  amber:  'bg-orange-600/14  text-orange-700  dark:text-orange-300  ring-orange-600/30',
   red:    'bg-rose-500/12    text-rose-700    dark:text-rose-300    ring-rose-500/25',
-  violet: 'bg-violet-500/12  text-violet-700  dark:text-violet-300  ring-violet-500/25',
+  violet: 'bg-sky-500/12     text-sky-700     dark:text-sky-300     ring-sky-500/25',
 };
 
 export const Badge = ({ tone = 'slate', className, ...props }) => (
@@ -201,11 +205,11 @@ export const EmptyState = ({ icon: Icon, title, hint }) => (
 
 /* ======================================================== StatCard ====== */
 const STAT_TONES = {
-  brand:  ['text-brand-500',   'from-brand-500/22   to-brand-500/5'],
+  brand:  ['text-brand-500',   'from-brand-500/24   to-brand-500/5'],
   green:  ['text-emerald-500', 'from-emerald-500/22 to-emerald-500/5'],
-  amber:  ['text-amber-500',   'from-amber-500/22   to-amber-500/5'],
+  amber:  ['text-orange-600',  'from-orange-600/22  to-orange-600/5'],
   red:    ['text-rose-500',    'from-rose-500/22    to-rose-500/5'],
-  violet: ['text-violet-500',  'from-violet-500/22  to-violet-500/5'],
+  violet: ['text-sky-500',     'from-sky-500/22     to-sky-500/5'],
 };
 
 export const StatCard = ({ icon: Icon, label, value, sub, tone = 'brand', className }) => {
@@ -255,9 +259,9 @@ export const ProgressBar = ({ value, tone = 'bg-brand-500', className }) => (
 /* =========================================================== Alert ====== */
 const ALERT_TONES = {
   red:   'bg-rose-500/10    border-rose-500/25    text-rose-700    dark:text-rose-300',
-  amber: 'bg-amber-500/10   border-amber-500/25   text-amber-700   dark:text-amber-300',
+  amber: 'bg-orange-600/10  border-orange-600/28  text-orange-700  dark:text-orange-300',
   green: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
-  brand: 'bg-brand-500/10   border-brand-500/25   text-brand-700   dark:text-brand-300',
+  brand: 'bg-brand-500/12   border-brand-500/30   text-brand-700   dark:text-brand-300',
 };
 
 export const Alert = ({ tone = 'red', title, children, className }) => (
@@ -435,3 +439,56 @@ export const Tabs = ({ tabs, active, onChange, className }) => (
 export const FieldRow = ({ children, className }) => (
   <div className={cn('grid gap-4 sm:grid-cols-2', className)}>{children}</div>
 );
+
+/* =========================================================== Modal ====== */
+/**
+ * Centred dialog over a dimmed backdrop.
+ *
+ * Closes on backdrop click and on Escape — a dialog that can only be dismissed
+ * by hitting a small × is a trap on a touchscreen, which is what the forecourt
+ * actually runs on.
+ */
+export const Modal = ({ title, description, onClose, children, size = 'md' }) => {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    document.addEventListener('keydown', onKey);
+    // Stop the page behind from scrolling under the dialog.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  const widths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[rgba(12,9,5,0.55)] p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <Card
+        className={cn('animate-rise w-full', widths[size])}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">{title}</h3>
+            {description && <p className="mt-0.5 text-xs text-ink-3">{description}</p>}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-[var(--glass-bg)] hover:text-ink"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        <CardContent className="pt-5">{children}</CardContent>
+      </Card>
+    </div>
+  );
+};

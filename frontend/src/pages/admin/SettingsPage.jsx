@@ -16,9 +16,16 @@ import {
   FieldRow, EmptyState, Table, Th, Td, Tr,
 } from '../../components/ui';
 
-const TABS = [
+/**
+ * Pump details are installation-wide configuration and stay admin-only; the
+ * other two tabs are the signed-in person's own account, so every role gets
+ * them. Non-admins never see the tab, and the API refuses it independently.
+ */
+const tabsFor = (role) => [
   { id: 'profile',       label: 'My profile',    icon: User },
-  { id: 'pump',          label: 'Pump details',  icon: Building2 },
+  ...(role === 'admin'
+    ? [{ id: 'pump',     label: 'Pump details',  icon: Building2 }]
+    : []),
   { id: 'notifications', label: 'Notifications', icon: BellRing },
 ];
 
@@ -34,6 +41,8 @@ const EVENTS = [
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
   const branding = useBranding();
+  const isAdmin = user.role === 'admin';
+  const TABS = tabsFor(user.role);
 
   const [tab, setTab] = useState('profile');
   const [profile, setProfile] = useState(null);
@@ -50,14 +59,18 @@ export default function SettingsPage() {
 
   /* ----------------------------------------------------------- loading -- */
   useEffect(() => {
-    Promise.all([api.get('/profile'), api.get('/settings')])
+    // A manager or attendant has no access to /settings, so do not ask for it —
+    // requesting it anyway would surface a 403 on a page that is working fine.
+    const requests = [api.get('/profile'), ...(isAdmin ? [api.get('/settings')] : [])];
+
+    Promise.all(requests)
       .then(([p, s]) => {
         setProfile(p.data.profile);
         setDelivery(p.data.delivery);
-        setSettings(s.data);
+        setSettings(isAdmin ? s.data : {});
       })
       .catch((e) => setError(errorMessage(e)));
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (tab !== 'notifications' || log) return;
@@ -188,8 +201,10 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader
-        title="Settings"
-        description="Your profile, this pump's details, and where alerts are sent."
+        title={isAdmin ? 'Settings' : 'My profile'}
+        description={isAdmin
+          ? "Your profile, this pump's details, and where alerts are sent."
+          : 'Your details, and where your alerts are sent.'}
       />
 
       <div className="space-y-5">
@@ -323,7 +338,7 @@ export default function SettingsPage() {
         )}
 
         {/* ================================================ PUMP ========== */}
-        {tab === 'pump' && (
+        {tab === 'pump' && isAdmin && (
           <div className="grid gap-5 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>

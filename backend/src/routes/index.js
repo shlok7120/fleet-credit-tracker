@@ -12,6 +12,7 @@ import * as txns from '../controllers/transactionController.js';
 import * as dash from '../controllers/dashboardController.js';
 import * as profile from '../controllers/profileController.js';
 import * as settings from '../controllers/settingsController.js';
+import * as users from '../controllers/userController.js';
 
 const router = Router();
 
@@ -24,18 +25,27 @@ router.get('/branding', settings.getPublicBranding);
 router.get('/auth/me', requireAuth, auth.me);
 
 // Only an admin can create accounts.
+/* ------------------------- Staff accounts ------------------------ */
+// Creating and removing the people who can sign in. Admin only.
+router.get('/users',                  requireAuth, requireRole('admin'), users.listUsers);
+router.post('/users',                 requireAuth, requireRole('admin'), users.createUser);
+router.patch('/users/:id',            requireAuth, requireRole('admin'), users.updateUser);
+router.post('/users/:id/password',    requireAuth, requireRole('admin'), users.resetPassword);
+router.delete('/users/:id',           requireAuth, requireRole('admin'), users.deactivateUser);
+
+// Kept for compatibility with anything already calling the old paths.
 router.post('/auth/register', requireAuth, requireRole('admin'), auth.register);
-router.get('/auth/users', requireAuth, requireRole('admin'), auth.listUsers);
+router.get('/auth/users',     requireAuth, requireRole('admin'), users.listUsers);
 
 /* ----------------------------- Profile --------------------------- */
-// Profile editing is admin-only, as specified. To open it to every signed-in
-// user, drop the requireRole('admin') from these five lines — the handlers
-// already act on req.user.userId and can never touch another account.
-router.get('/profile',                 requireAuth, requireRole('admin'), profile.getProfile);
-router.put('/profile',                 requireAuth, requireRole('admin'), profile.updateProfile);
-router.put('/profile/password',        requireAuth, requireRole('admin'), profile.changePassword);
-router.get('/profile/notifications',   requireAuth, requireRole('admin'), profile.listNotifications);
-router.post('/profile/notifications/test', requireAuth, requireRole('admin'), profile.sendTestNotification);
+// Every signed-in user edits their OWN details — attendants and fleet managers
+// included. No role check is needed: each handler scopes to req.user.userId,
+// so there is no way to reach another account regardless of role.
+router.get('/profile',                     requireAuth, profile.getProfile);
+router.put('/profile',                     requireAuth, profile.updateProfile);
+router.put('/profile/password',            requireAuth, profile.changePassword);
+router.get('/profile/notifications',       requireAuth, profile.listNotifications);
+router.post('/profile/notifications/test', requireAuth, profile.sendTestNotification);
 
 /* ---------------------------- Settings --------------------------- */
 router.get('/settings', requireAuth, requireRole('admin'), settings.getSettings);

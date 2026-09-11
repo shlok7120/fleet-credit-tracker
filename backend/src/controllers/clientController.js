@@ -1,6 +1,9 @@
 /** Corporate fleet clients: CRUD + credit exposure. */
-import { query } from '../config/db.js';
+import bcrypt from 'bcryptjs';
+import { query, withTransaction } from '../config/db.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+
+const USERNAME_PATTERN = /^[a-z0-9_]{3,50}$/;
 
 /**
  * Admins see every client. A manager sees only the client they own.
@@ -52,20 +55,74 @@ export const getClient = asyncHandler(async (req, res) => {
   res.json(client);
 });
 
+/**
+ * Create a client, optionally creating its fleet manager's login at the same
+ * time.
+ *
+ * A new corporate account almost always needs a new sign-in for that company's
+ * manager. Making that a separate, easily-forgotten step leaves fleets that
+ * nobody can actually see. Both rows are written in one transaction, so a
+ * client is never created with a half-made manager account attached.
+ */
 export const createClient = asyncHandler(async (req, res) => {
-  const { company_name, contact_person, contact_phone, credit_limit, manager_user_id } = req.body;
+  const {
+    company_name, contact_person, contact_phone, credit_limit,
+    manager_user_id, new_manager,
+  } = req.body;
 
   if (!company_name || credit_limit == null) {
-    return res.status(400).json({ error: 'company_name and credit_limit are required.' });
+    return res.status(400).json({ error: 'Company name and credit limit are required.' });
+  }
+  if (Number(credit_limit) < 0) {
+    return res.status(400).json({ error: 'Credit limit cannot be negative.' });
   }
 
-  const { rows } = await query(
-    `INSERT INTO clients (company_name, contact_person, contact_phone, credit_limit, manager_user_id)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [company_name.trim(), contact_person || null, contact_phone || null,
-     Number(credit_limit), manager_user_id || null]
-  );
-  res.status(201).json(rows[0]);
+  if (new_manager) {
+    const { username, password, full_name } = new_manager;
+    if (!username || !password || !full_name) {
+      return res.status(400).json({
+        error: 'A new manager needs a username, password and full name.',
+      });
+    }
+    if (!USERNAME_PATTERN.test(String(username).toLowerCase().trim())) {
+      return res.status(400).json({
+        error: 'Username must be 3–50 characters: lowercase letters, numbers or underscore.',
+      });
+    }
+    if (String(password).length < 8) {
+      return res.status(400).json({ error: 'Manager password must be at least 8 characters.' });
+    }
+  }
+
+  const created = await withTransaction(async (db) => {
+    let managerId = manager_user_id || null;
+
+    if (new_manager) {
+      const { rows } = await db.query(
+        `INSERT INTO users (username, full_name, password_hash, role, designation, email, phone)
+         VALUES ($1,$2,$3,'manager',$4,$5,$6) RETURNING user_id`,
+        [
+          String(new_manager.username).toLowerCase().trim(),
+          String(new_manager.full_name).trim(),
+          await bcrypt.hash(new_manager.password, 10),
+          'Fleet manager',
+          new_manager.email ? String(new_manager.email).trim().toLowerCase() : null,
+          new_manager.phone ? String(new_manager.phone).trim() : null,
+        ]
+      );
+      managerId = rows[0].user_id;
+    }
+
+    const { rows } = await db.query(
+      `INSERT INTO clients (company_name, contact_person, contact_phone, credit_limit, manager_user_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [company_name.trim(), contact_person || null, contact_phone || null,
+       Number(credit_limit), managerId]
+    );
+    return rows[0];
+  });
+
+  res.status(201).json(created);
 });
 
 export const updateClient = asyncHandler(async (req, res) => {
@@ -103,11 +160,32 @@ export const recordPayment = asyncHandler(async (req, res) => {
   res.json({ message: `Payment of ${amount} recorded.`, client: rows[0] });
 });
 
+/**
+ * Remove a client from circulation.
+ *
+ * Deactivation, not deletion: the client's transactions are the pump's own
+ * sales history and its outstanding balance may still be owed. Dropping the
+ * row would take the ledger with it. This hides them from every screen and
+ * stops further fuelling, while the money and the history remain.
+ */
 export const deactivateClient = asyncHandler(async (req, res) => {
-  const { rows } = await query(
-    'UPDATE clients SET is_active = FALSE WHERE client_id = $1 RETURNING client_id',
+  const { rows: found } = await query(
+    `SELECT c.client_id, c.company_name, c.current_balance,
+            COUNT(v.vehicle_id)::int AS vehicles
+     FROM clients c
+     LEFT JOIN vehicles v ON v.client_id = c.client_id AND v.is_active
+     WHERE c.client_id = $1
+     GROUP BY c.client_id`,
     [req.params.id]
   );
-  if (!rows[0]) return res.status(404).json({ error: 'Client not found.' });
-  res.json({ message: 'Client deactivated.' });
+  if (!found[0]) return res.status(404).json({ error: 'Client not found.' });
+
+  await query('UPDATE clients SET is_active = FALSE WHERE client_id = $1', [req.params.id]);
+
+  res.json({
+    message: `${found[0].company_name} removed.`,
+    company_name: found[0].company_name,
+    outstanding: Number(found[0].current_balance),
+    vehicles: found[0].vehicles,
+  });
 });

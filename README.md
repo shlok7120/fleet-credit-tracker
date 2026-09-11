@@ -255,6 +255,28 @@ name on the sign-in screen, in the sidebar, on the browser tab and on every
 invoice. There is exactly one settings row, enforced by `CHECK (id = 1)`.
 Reseeding deliberately leaves it alone: branding is configuration, not demo data.
 
+### Staff accounts
+
+**Staff** (admin only) creates and removes the people who can sign in —
+attendants, fleet managers and other admins — with an in-place password reset
+that does not require knowing the old one.
+
+Accounts are deactivated, never deleted. A user is referenced by every
+transaction they logged; dropping the row would either destroy that history or
+leave transactions with no attendant. Two lockout guards are enforced in the
+API, not just hidden in the UI: you cannot deactivate or demote yourself, and
+the last active admin cannot be removed.
+
+A new client can be created together with its fleet manager's login in one
+step, inside a single transaction — so a failed username never leaves a client
+with a half-made manager attached. Removing a client warns if money is still
+outstanding, because deactivation does not cancel the debt.
+
+**Profile editing is open to every role.** Each handler scopes to the id inside
+the caller's token, so no role check is needed to keep one account out of
+another. Pump details stay admin-only, and the settings page hides that tab
+from non-admins.
+
 ### Notifications
 
 Two events fan out to admins who opt in:
