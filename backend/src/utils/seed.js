@@ -9,6 +9,7 @@
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import pool, { query } from '../config/db.js';
+import { lineTotal } from './money.js';
 
 dotenv.config();
 
@@ -136,7 +137,7 @@ async function main() {
       }
 
       const price = Number((PRICE[v.fuel] * rand(0.97, 1.03)).toFixed(2));
-      const cost = Number((litres * price).toFixed(2));
+      const cost = lineTotal(litres, price);
 
       pending.push([v.vehicle_id, pick(attendants), litres, price, cost, odo, ts.toISOString()]);
       balances[v.client_id] = (balances[v.client_id] || 0) + cost;

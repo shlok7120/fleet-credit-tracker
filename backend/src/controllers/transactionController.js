@@ -73,7 +73,9 @@ export const createTransaction = asyncHandler(async (req, res) => {
   const vehicle = vrows[0];
   if (!vehicle) return res.status(404).json({ error: 'Vehicle not found or inactive.' });
 
-  const total_cost = Number((litres * price).toFixed(2));
+  // Exact decimal arithmetic — see utils/money.js for why toFixed is not safe
+  // for money.
+  const total_cost = lineTotal(litres, price);
   const available = Number(vehicle.credit_limit) - Number(vehicle.current_balance);
 
   // --- 2. Hard business rule: never dispense beyond the credit limit ---

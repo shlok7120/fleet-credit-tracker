@@ -47,14 +47,30 @@ export const listPayments = asyncHandler(async (req, res) => {
   const { client_id, method, from, to } = req.query;
   const limit = Math.min(Number(req.query.limit) || 100, 300);
 
-  // A manager sees only their own; an admin sees everything or filters.
-  let scopedClient = client_id ? Number(client_id) : null;
+  // This handler serves both /payments?client_id=N and /clients/:id/payments.
+  // The path parameter wins — a route that names a client in its URL must not
+  // quietly return every client's payments.
+  let scopedClient = req.params.id
+    ? Number(req.params.id)
+    : (client_id ? Number(client_id) : null);
+
   if (req.user.role === 'manager') {
     const { rows } = await query(
       'SELECT client_id FROM clients WHERE manager_user_id = $1', [req.user.userId]
     );
-    if (!rows.length) return res.json({ payments: [], totals: { count: 0, amount: 0 } });
-    scopedClient = rows[0].client_id;
+    if (!rows.length) {
+      return res.json({ payments: [], totals: { count: 0, amount: 0, reversed: 0 }, methods: METHODS });
+    }
+    const own = rows[0].client_id;
+
+    // Asking for someone else's payments is refused outright, the same as every
+    // other /clients/:id route. Quietly substituting their own data would be
+    // safe but misleading — the caller would believe they were reading the
+    // client they named.
+    if (scopedClient && scopedClient !== own) {
+      return res.status(403).json({ error: 'You do not manage this client.' });
+    }
+    scopedClient = own;
   }
 
   const { rows } = await query(
