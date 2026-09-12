@@ -404,6 +404,34 @@ an empty database — an existing installation is recorded as already baselined.
 
 ## Deployment
 
+Deployments are **manual**. The Vercel projects are deliberately not connected
+to GitHub: a push should not put half-finished work in front of the pump.
+
+```bash
+cd backend  && vercel deploy --prod --yes --scope shlok712
+cd frontend && vercel deploy --prod --yes --scope shlok712
+```
+
+Backend first whenever the frontend calls a new endpoint.
+
+`--scope shlok712` is required. The projects live under a Vercel *team* of that
+name, and since CLI 59 the scope is no longer inferred — without the flag,
+deploy fails with "Not authorized" while read commands still work.
+
+Run migrations before deploying a release that adds columns, or the API will
+error on the ones it expects:
+
+```bash
+DATABASE_URL="postgres://..." npm run migrate
+```
+
+> If Git is ever reconnected, set each project's **Root Directory** first —
+> `backend` and `frontend` respectively. Without it Vercel clones the repo root,
+> finds no entrypoint, and every pushed commit produces a failed build while the
+> last good deployment silently stays live.
+
+
+
 Live: **https://fleet-credit-tracker.vercel.app**
 
 The three services cannot all live on Vercel. Vercel's serverless functions cap
