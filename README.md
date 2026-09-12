@@ -268,6 +268,26 @@ midnight and are half-open `[start, end)`, so a fill at exactly midnight on the
 16th bills once, in the later cycle. Verified: the two halves of a month sum
 exactly to the whole month.
 
+### The invoice archive
+
+An issued invoice is an accounting record, so it is stored rather than
+recalculated. Each row in `invoice_dispatches` carries a JSONB `snapshot` of
+the whole document — line items, totals, the client's credit position and the
+pump's details as they stood at issue — plus a consecutive `invoice_no` from a
+sequence, which GST requires.
+
+This matters because recomputing is not safe: deactivate a vehicle, correct a
+fill, and last fortnight's figures quietly become something the client never
+received. Verified by deleting 29 transactions underneath an issued invoice —
+its totals and line items were unchanged. An *unissued* cycle still recomputes
+live, since it is a preview rather than a record.
+
+Issuing and delivering are separate. The invoice is archived the moment it is
+issued, whether or not email is configured and whether or not delivery later
+succeeds; `status` describes only the delivery attempt. Admins browse every
+client's invoices under **Billing → Invoice archive**, filterable by client and
+cycle, and open any one exactly as it was issued.
+
 `invoice_dispatches` records every invoice sent, with `UNIQUE (client_id,
 period)`. That constraint is the safeguard — the scheduled job may be retried,
 but a client can never receive the same fortnight twice, and the database

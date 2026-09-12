@@ -83,6 +83,10 @@ router.get('/clients/:id/invoice',      requireAuth, requireRole('admin', 'manag
 router.post('/clients/:id/invoice/send', requireAuth, requireRole('admin'), billing.sendInvoice);
 router.get('/billing/dispatches',        requireAuth, requireRole('admin'), billing.listDispatches);
 
+// The permanent archive: every invoice ever issued, across every client.
+router.get('/invoices',      requireAuth, requireRole('admin'), billing.listInvoices);
+router.get('/invoices/:id',  requireAuth, requireRole('admin', 'manager'), billing.getArchivedInvoice);
+
 // Triggered by Vercel Cron each morning; only acts on the 1st and the 16th.
 // Guarded by CRON_SECRET rather than a session, since no user is signed in.
 router.post('/billing/run', billing.runScheduledBilling);
