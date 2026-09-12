@@ -15,6 +15,10 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import { scoreTransaction } from '../utils/mlClient.js';
 import { notify } from '../utils/notifier.js';
 import { hourAtPump } from '../utils/time.js';
+import { lineTotal } from '../utils/money.js';
+
+// How long an attendant may be kept waiting on alert delivery.
+const NOTIFY_BUDGET_MS = Number(process.env.NOTIFY_BUDGET_MS) || 2500;
 
 export const listTransactions = asyncHandler(async (req, res) => {
   const { client_id, vehicle_id, flagged, limit = 100 } = req.query;
@@ -182,14 +186,27 @@ export const createTransaction = asyncHandler(async (req, res) => {
     }]);
   }
 
-  // A failure here must never turn a recorded sale into an error for the
-  // attendant — the fuel has already been dispensed and billed.
+  // Alerts must never turn a recorded sale into an error, or into a wait.
+  //
+  // Two constraints pull against each other here. Awaiting without a bound
+  // puts the email provider's latency directly in front of the attendant, on
+  // exactly the fills that matter most. But a floating promise is unreliable
+  // on serverless, where the function can be frozen the moment the response
+  // is sent — so "fire and forget" can mean "forget".
+  //
+  // Capping the wait satisfies both: a normal send (a few hundred ms) finishes
+  // inside the budget, and a slow provider costs the attendant NOTIFY_BUDGET_MS
+  // rather than however long it feels like taking. Either way the notification
+  // row was written to the database before the provider was called, so there
+  // is always a record of what was meant to go out.
   if (alerts.length) {
-    try {
-      await Promise.all(alerts.map(([event, msg]) => notify(event, msg)));
-    } catch (err) {
-      console.warn('[txn] notification dispatch failed:', err.message);
-    }
+    const dispatch = Promise.all(alerts.map(([event, msg]) => notify(event, msg)))
+      .catch((err) => console.warn('[txn] notification dispatch failed:', err.message));
+
+    await Promise.race([
+      dispatch,
+      new Promise((resolve) => setTimeout(resolve, NOTIFY_BUDGET_MS)),
+    ]);
   }
 
   res.status(201).json({
