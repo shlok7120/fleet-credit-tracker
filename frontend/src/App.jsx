@@ -11,6 +11,7 @@ import AlertsPage from './pages/admin/AlertsPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import UsersPage from './pages/admin/UsersPage';
 import BillingPage from './pages/admin/BillingPage';
+import PaymentsPage from './pages/admin/PaymentsPage';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import VehiclesPage from './pages/manager/VehiclesPage';
 import InvoicePage from './pages/manager/InvoicePage';
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/admin/alerts"  element={<Protected roles={['admin']}><AlertsPage /></Protected>} />
             <Route path="/admin/users"    element={<Protected roles={['admin']}><UsersPage /></Protected>} />
             <Route path="/admin/billing"  element={<Protected roles={['admin']}><BillingPage /></Protected>} />
+            <Route path="/admin/payments" element={<Protected roles={['admin']}><PaymentsPage /></Protected>} />
 
             {/* Settings is every role's own profile, so it is not admin-only.
                 The page itself hides the pump-details tab from non-admins. */}

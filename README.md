@@ -268,6 +268,35 @@ midnight and are half-open `[start, end)`, so a fill at exactly midnight on the
 16th bills once, in the later cycle. Verified: the two halves of a month sum
 exactly to the whole month.
 
+### Payments
+
+Recording a payment used to be a single destructive statement:
+
+```sql
+UPDATE clients SET current_balance = current_balance - $amount
+```
+
+The money vanished into a subtraction. There was no way to answer when a client
+last paid, how much, by what method, or who entered it — and a mis-keyed amount
+could not be traced, let alone undone. For a system whose whole job is tracking
+credit, that was the most important event going unrecorded.
+
+`payments` now stores each one with its method (cash / cheque / NEFT / RTGS /
+UPI), a reference to reconcile against a bank statement, and the date the money
+actually arrived — which is often not the date it was keyed in.
+
+A payment is **reversed, never deleted**. Reversing puts the debt back and
+leaves both entries on the ledger, because "this entry was a mistake" is itself
+part of the record, and a bank statement will still show the original. Reversed
+rows appear struck through and are excluded from totals.
+
+The insert and the balance update run in one SQL transaction, so a payment can
+never reduce a balance without leaving a record — the exact failure this table
+was added to prevent.
+
+`GET /clients/:id/statement` returns a statement of account: fuelled against
+received over a date range, with the resulting balance.
+
 ### The invoice archive
 
 An issued invoice is an accounting record, so it is stored rather than

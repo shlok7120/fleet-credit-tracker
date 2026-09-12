@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Building2, Plus, TrendingUp, Wallet, Trash2, TriangleAlert, UserPlus } from 'lucide-react';
 
+const PAYMENT_METHODS = [
+  ['cash', 'Cash'], ['cheque', 'Cheque'], ['neft', 'NEFT'],
+  ['rtgs', 'RTGS'], ['upi', 'UPI'], ['other', 'Other'],
+];
+
 import api, { errorMessage } from '../../lib/api';
 import { money, num, utilisationTone } from '../../lib/utils';
 import { PageHeader } from '../../components/AppLayout';
@@ -73,11 +78,17 @@ export default function ClientsPage() {
 
   const recordPayment = async (e) => {
     e.preventDefault();
-    const amount = Number(new FormData(e.target).get('amount'));
+    const f = new FormData(e.target);
     setBusy(true); setError('');
     try {
-      await api.post(`/clients/${payFor.client_id}/payments`, { amount });
-      flash(`Payment of ${money(amount)} recorded for ${payFor.company_name}.`);
+      const { data } = await api.post(`/clients/${payFor.client_id}/payments`, {
+        amount: Number(f.get('amount')),
+        method: f.get('method'),
+        reference: f.get('reference'),
+        received_on: f.get('received_on'),
+        note: f.get('note'),
+      });
+      flash(`${data.message} — ${payFor.company_name}.`);
       setPayFor(null);
       load();
     } catch (err) { setError(errorMessage(err)); }
@@ -300,24 +311,62 @@ export default function ClientsPage() {
 
       {/* ---------------------------- Record payment ----------------------- */}
       {payFor && (
-        <Modal title={`Record payment — ${payFor.company_name}`} onClose={() => setPayFor(null)}>
-          <div className="glass-quiet mb-4 p-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-ink-3">Currently owed</span>
+        <Modal
+          title={`Record payment — ${payFor.company_name}`}
+          description="Kept as a permanent record. A mistake is reversed later, never deleted."
+          size="lg"
+          onClose={() => setPayFor(null)}
+        >
+          <div className="glass-quiet mb-4 flex flex-wrap gap-x-8 gap-y-2 p-3 text-sm">
+            <div>
+              <span className="block text-[11px] text-ink-3">Currently owed</span>
               <span className="tnum font-semibold text-ink">{money(payFor.current_balance)}</span>
             </div>
-            <div className="mt-1 flex justify-between">
-              <span className="text-ink-3">Credit limit</span>
+            <div>
+              <span className="block text-[11px] text-ink-3">Credit limit</span>
               <span className="tnum text-ink-2">{money(payFor.credit_limit)}</span>
             </div>
           </div>
-          <form onSubmit={recordPayment} className="space-y-3.5">
+
+          <form onSubmit={recordPayment} className="space-y-4">
+            <FieldRow>
+              <div>
+                <Label>Amount received (₹)</Label>
+                <Input name="amount" type="number" min="1" step="0.01" required autoFocus
+                       className="tnum" placeholder={String(Math.round(payFor.current_balance))} />
+              </div>
+              <div>
+                <Label>Date received</Label>
+                <Input name="received_on" type="date"
+                       defaultValue={new Date().toISOString().slice(0, 10)} />
+                <p className="mt-1 text-[11px] text-ink-3">
+                  When the money arrived, not when you are entering it.
+                </p>
+              </div>
+            </FieldRow>
+
+            <FieldRow>
+              <div>
+                <Label>Method</Label>
+                <Select name="method" defaultValue="cheque">
+                  {PAYMENT_METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </Select>
+              </div>
+              <div>
+                <Label>Reference <span className="font-normal text-ink-3">optional</span></Label>
+                <Input name="reference" placeholder="Cheque no. / UTR / UPI ref" />
+                <p className="mt-1 text-[11px] text-ink-3">
+                  What you will match against your bank statement.
+                </p>
+              </div>
+            </FieldRow>
+
             <div>
-              <Label>Amount received (₹)</Label>
-              <Input name="amount" type="number" min="1" step="0.01" required autoFocus
-                     className="tnum" placeholder={String(Math.round(payFor.current_balance))} />
+              <Label>Note <span className="font-normal text-ink-3">optional</span></Label>
+              <Input name="note" placeholder="Part settlement for August" />
             </div>
-            <div className="flex justify-end gap-2">
+
+            <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="secondary" onClick={() => setPayFor(null)}>Cancel</Button>
               <Button type="submit" variant="success" loading={busy}>
                 <TrendingUp className="size-4" /> Record payment

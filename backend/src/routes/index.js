@@ -14,6 +14,7 @@ import * as profile from '../controllers/profileController.js';
 import * as settings from '../controllers/settingsController.js';
 import * as users from '../controllers/userController.js';
 import * as billing from '../controllers/billingController.js';
+import * as payments from '../controllers/paymentController.js';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ router.get('/clients', requireAuth, requireRole('admin', 'manager'), clients.lis
 router.get('/clients/:id', requireAuth, requireRole('admin', 'manager'), clients.getClient);
 router.post('/clients', requireAuth, requireRole('admin'), clients.createClient);
 router.put('/clients/:id', requireAuth, requireRole('admin'), clients.updateClient);
-router.post('/clients/:id/payments', requireAuth, requireRole('admin'), clients.recordPayment);
+router.post('/clients/:id/payments', requireAuth, requireRole('admin'), payments.recordPayment);
 router.delete('/clients/:id', requireAuth, requireRole('admin'), clients.deactivateClient);
 
 /* ---------------------------- Vehicles --------------------------- */
@@ -77,6 +78,15 @@ router.get('/dashboard/admin', requireAuth, requireRole('admin'), dash.adminDash
 router.get('/dashboard/manager', requireAuth, requireRole('manager'), dash.managerDashboard);
 router.get('/dashboard/attendant', requireAuth, requireRole('attendant', 'admin'), dash.attendantDashboard);
 router.get('/clients/:id/forecast', requireAuth, requireRole('admin', 'manager'), dash.clientForecast);
+/* ---------------------------- Payments --------------------------- */
+// Money coming IN. A manager may read their own company's payments — "did you
+// get our cheque?" is the question this answers — but only an admin records
+// or reverses one.
+router.get('/payments',                requireAuth, requireRole('admin', 'manager'), payments.listPayments);
+router.get('/clients/:id/payments',    requireAuth, requireRole('admin', 'manager'), payments.listPayments);
+router.post('/payments/:id/reverse',   requireAuth, requireRole('admin'), payments.reversePayment);
+router.get('/clients/:id/statement',   requireAuth, requireRole('admin', 'manager'), payments.clientStatement);
+
 /* ----------------------------- Billing --------------------------- */
 // Invoices run on fortnightly cycles: 1st–15th and 16th–end of month.
 router.get('/clients/:id/invoice',      requireAuth, requireRole('admin', 'manager'), billing.getInvoice);

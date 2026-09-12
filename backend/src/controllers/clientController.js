@@ -152,31 +152,9 @@ export const updateClient = asyncHandler(async (req, res) => {
   res.json(rows[0]);
 });
 
-/** Record a payment from the client, reducing what they owe. */
-export const recordPayment = asyncHandler(async (req, res) => {
-  const amount = Number(req.body.amount);
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'A positive payment amount is required.' });
-  }
+// Payments moved to paymentController.js. They are financial events that need
+// a permanent record, not a subtraction applied to a running total.
 
-  const { rows } = await query(
-    `UPDATE clients
-     SET current_balance = GREATEST(current_balance - $2, 0)
-     WHERE client_id = $1 RETURNING *`,
-    [req.params.id, amount]
-  );
-  if (!rows[0]) return res.status(404).json({ error: 'Client not found.' });
-  res.json({ message: `Payment of ${amount} recorded.`, client: rows[0] });
-});
-
-/**
- * Remove a client from circulation.
- *
- * Deactivation, not deletion: the client's transactions are the pump's own
- * sales history and its outstanding balance may still be owed. Dropping the
- * row would take the ledger with it. This hides them from every screen and
- * stops further fuelling, while the money and the history remain.
- */
 export const deactivateClient = asyncHandler(async (req, res) => {
   const { rows: found } = await query(
     `SELECT c.client_id, c.company_name, c.current_balance,
